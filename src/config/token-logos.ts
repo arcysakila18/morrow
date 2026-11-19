@@ -14,16 +14,16 @@ const ZERO = "0x0000000000000000000000000000000000000000";
 export const isNativeLike = (a?: string) => !!a && [ZERO, NATIVE_ADDRESS.toLowerCase(), "native"].includes(a.toLowerCase());
 
 const TW = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains";
-const ETH = `${TW}/ethereum/info/logo.png`;
-const BNB = `${TW}/smartchain/info/logo.png`;
+/** Morrow's own copies (public/tokens) of the ETH, WETH and BNB artwork: fast and always available. */
+export const ETH = "/tokens/eth.png";
+export const BNB = "/tokens/bnb.png";
 const tw = (address: string) => `${TW}/ethereum/assets/${address}/logo.png`;
-/** CoinGecko's official WETH artwork, large (250px) so it stays sharp. */
-const WETH = "https://assets.coingecko.com/coins/images/2518/large/weth.png";
+const WETH = "/tokens/weth.png";
 const USDC = tw("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48");
 const USDT = tw("0xdAC17F958D2ee523a2206206994597C13D831ec7");
 const WBTC = tw("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599");
 const DAI = tw("0x6B175474E89094C44Da98b954EedeAC495271d0F");
-const WBNB = `${TW}/smartchain/assets/0xbb4CdB9CBd36B01bD1cBaEBF2De08d9173bc095c/logo.png`;
+const WBNB = BNB;
 
 /** chainId → (lowercase address → logo) for each network's core assets. */
 const CORE_LOGOS: Record<number, Record<string, string>> = {

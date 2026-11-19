@@ -5,7 +5,7 @@ import type { Token } from "./types";
 
 export function nativeToken(chainId: number): Token {
   const c = getChain(chainId).nativeCurrency;
-  return { chainId, address: NATIVE_ADDRESS, symbol: c.symbol, name: c.name === "Ether" ? "Ether" : c.name, decimals: c.decimals, source: "core" };
+  return { chainId, address: NATIVE_ADDRESS, symbol: c.symbol, name: c.symbol === "ETH" ? "Ethereum" : c.name, decimals: c.decimals, source: "core" };
 }
 
 type Core = [address: string, symbol: string, name: string, decimals: number];

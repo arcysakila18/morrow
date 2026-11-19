@@ -87,7 +87,7 @@ function mapPool(p: Record<string, any>): MarketPool {
     dexId: String(p.dex_id ?? ""),
     feeLabel: label,
     feeRate: rate,
-    tokens: (p.tokens ?? []).map((t: Record<string, any>) => ({ address: String(t.id ?? t.address), symbol: String(t.symbol ?? "?"), name: String(t.name ?? ""), decimals: num(t.decimals) ?? undefined })),
+    tokens: (p.tokens ?? []).map((t: Record<string, any>) => ({ address: String(t.id ?? t.address), symbol: String(t.symbol ?? "?"), name: prettyName(String(t.symbol ?? ""), String(t.name ?? "")), decimals: num(t.decimals) ?? undefined })),
     liquidityUsd: liq,
     volume24hUsd: vol,
     txns24h: num(p.txns_24h ?? p.transactions_24h ?? p.transactions),
@@ -112,6 +112,9 @@ export async function getPool(NETWORK: string, address: string) {
   return mapPool(j);
 }
 
+/** Friendlier display names for well-known assets (indexers often call native ETH "Ether"). */
+const prettyName = (symbol: string, name: string) => (symbol.toUpperCase() === "ETH" && /^(ether|eth)$/i.test(name.trim()) ? "Ethereum" : name);
+
 export async function getToken(NETWORK: string, address: string): Promise<MarketToken> {
   const j = await get<Record<string, any>>(`/networks/${NETWORK}/tokens/${address}`, 20);
   const s = j.summary ?? {};
@@ -120,7 +123,7 @@ export async function getToken(NETWORK: string, address: string): Promise<Market
     address: String(j.id ?? address),
     chain: j.chain ? String(j.chain) : null,
     symbol: String(j.symbol ?? "?"),
-    name: String(j.name ?? ""),
+    name: prettyName(String(j.symbol ?? ""), String(j.name ?? "")),
     decimals: num(j.decimals),
     priceUsd: num(s.price_usd),
     change24h: num(d.last_price_usd_change ?? d.price_usd_change),
