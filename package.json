@@ -2,7 +2,7 @@
   "name": "morrow",
   "version": "0.1.0",
   "private": true,
-  "description": "MORROW \u2014 an independent decentralized exchange interface for Robinhood Chain",
+  "description": "MORROW — an independent decentralized exchange interface for Robinhood Chain",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -13,6 +13,11 @@
   "dependencies": {
     "@privy-io/react-auth": "^2.0.0",
     "@privy-io/wagmi": "^1.0.0",
+    "@solana-program/memo": "^0.16.0",
+    "@solana-program/system": "^0.16.0",
+    "@solana-program/token": "^0.18.0",
+    "@solana/kit": "^8.6.0",
+    "@solana/spl-token": "^0.4.15",
     "@solana/web3.js": "^1.98.0",
     "@tanstack/react-query": "^5.85.0",
     "@wagmi/core": "^2.17.0",
