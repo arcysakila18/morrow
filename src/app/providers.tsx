@@ -2,18 +2,18 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { PrivyProvider } from "@privy-io/react-auth";
-import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
 import { WagmiProvider } from "@privy-io/wagmi";
 import { PRIVY_APP_ID, wagmiConfig } from "@/lib/wagmi";
 import { SUPPORTED_CHAINS, robinhoodChain } from "@/config/chains";
 import { WalletModal } from "@/components/wallet/WalletModal";
+import { SolanaConnectModal } from "@/components/wallet/SolanaConnectModal";
+import { useSolanaAutoConnect } from "@/hooks/useSolanaWallet";
 import { Toaster } from "@/components/layout/Toaster";
 import { useLiveSync } from "@/hooks/useLive";
 
-const solanaConnectors = toSolanaWalletConnectors();
-
 function LiveSync() {
   useLiveSync();
+  useSolanaAutoConnect();
   return null;
 }
 
@@ -34,21 +34,17 @@ export function Providers({ children }: { children: ReactNode }) {
           landingHeader: "Connect to Morrow",
           loginMessage: "Trade at your own pace.",
           showWalletLoginFirst: true,
-          walletChainType: "ethereum-and-solana",
         },
-        // Phantom, Solflare, Backpack… alongside EVM wallets.
-        externalWallets: { solana: { connectors: solanaConnectors } },
-        // Email users get self-custodial Privy wallets on both stacks; users with their own wallet keep using it.
-        embeddedWallets: {
-          ethereum: { createOnLogin: "users-without-wallets" },
-          solana: { createOnLogin: "users-without-wallets" },
-        },
+        // EVM only. Solana wallets connect directly (see SolanaConnectModal).
+        // Email users get a self-custodial Privy EVM wallet; users with their own wallet keep using it.
+        embeddedWallets: { ethereum: { createOnLogin: "users-without-wallets" } },
       }}
     >
       <QueryClientProvider client={qc}>
         <WagmiProvider config={wagmiConfig}>
           {children}
           <WalletModal />
+          <SolanaConnectModal />
           <Toaster />
           <LiveSync />
         </WagmiProvider>

@@ -9,7 +9,7 @@ import { IconExternal } from "@/components/ui/Icons";
 import { explorerUrl } from "@/config/chains";
 import { shortAddress } from "@/lib/format";
 import { useAppChain } from "@/hooks/useAppChain";
-import { useSolanaWallet } from "@/hooks/useSolanaWallet";
+import { disconnectSolana, useSolanaWallet } from "@/hooks/useSolanaWallet";
 import { openWalletModal } from "./WalletModal";
 
 export function Avatar({ address, size = 22 }: { address: string; size?: number }) {
@@ -33,7 +33,7 @@ export function ConnectButton() {
   const { marketChainId, isSolana } = useAppChain();
   const address = isSolana ? sol.address : evm.address;
   const isConnected = isSolana ? !!sol.address : evm.isConnected;
-  const connector = isSolana ? { name: sol.wallet?.walletClientType ?? "Solana wallet" } : evm.connector;
+  const connector = isSolana ? { name: sol.wallet?.name ?? "Solana wallet" } : evm.connector;
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(false);
@@ -46,7 +46,7 @@ export function ConnectButton() {
 
   if (!mounted || !isConnected || !address)
     return (
-      <Button variant="primary" size="md" onClick={() => openWalletModal(isSolana ? "solana" : "any")} loading={mounted && !ready} className="rounded-full px-4">
+      <Button variant="primary" size="md" onClick={() => openWalletModal(isSolana ? "solana" : "any")} loading={mounted && !ready && !isSolana} className="rounded-full px-4">
         <span>
           Connect<span className="hidden sm:inline"> wallet</span>
         </span>
@@ -88,6 +88,7 @@ export function ConnectButton() {
           <button
             onClick={async () => {
               setOpen(false);
+              if (isSolana) return void (await disconnectSolana());
               if (evm.isConnected) disconnect();
               if (authenticated) await logout();
             }}
