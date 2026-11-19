@@ -6,11 +6,13 @@ import { Change } from "@/components/ui/misc";
 import { Skeleton } from "@/components/ui/Spinner";
 import { formatUsd } from "@/lib/format";
 import { Flash } from "@/components/ui/Live";
+import { useAppChain } from "@/hooks/useAppChain";
 import type { MarketToken } from "@/lib/market/dexpaprika";
 
 /** Live "most traded" strip under the swap card. Hidden entirely if data is unavailable. */
 export function TopMovers() {
-  const q = useApi<{ tokens: MarketToken[] }>("/api/market/tokens?order=volume", { refetchInterval: 30_000 });
+  const { chainId } = useAppChain();
+  const q = useApi<{ tokens: MarketToken[] }>(`/api/market/tokens?order=volume&chainId=${chainId}`, { refetchInterval: 30_000 });
   if (q.isError || (q.data && !q.data.tokens.length)) return null;
   const list = q.data?.tokens.slice(0, 4);
   return (
@@ -44,7 +46,7 @@ export function TopMovers() {
           ),
         )}
       </div>
-      <p className="mt-3 text-right text-[11px] text-faint">Market data: DexPaprika, indexed from Robinhood Chain pools.</p>
+      <p className="mt-3 text-right text-[11px] text-faint">Market data: DexPaprika, indexed from on-chain pools.</p>
     </section>
   );
 }

@@ -6,18 +6,19 @@ import type { ProviderStatus, Quote, QuoteRequest, RouteHop } from "../types";
 
 const BASE = "https://api.1inch.dev/swap/v6.0";
 
-let spenderCache: { chainId: number; address: Address; at: number } | null = null;
+const spenderCache = new Map<number, { address: Address; at: number }>();
 
 async function getSpender(chainId: number, headers: HeadersInit): Promise<Address> {
-  if (spenderCache && spenderCache.chainId === chainId && Date.now() - spenderCache.at < 3_600_000) return spenderCache.address;
+  const hit = spenderCache.get(chainId);
+  if (hit && Date.now() - hit.at < 3_600_000) return hit.address;
   const r = await fetch(`${BASE}/${chainId}/approve/spender`, { headers, cache: "no-store", signal: AbortSignal.timeout(6000) });
   const j = await r.json();
   const address = getAddress(j.address);
-  spenderCache = { chainId, address, at: Date.now() };
+  spenderCache.set(chainId, { address, at: Date.now() });
   return address;
 }
 
-/** 1inch Swap API v6 (Classic). Robinhood Chain is supported by chain id 4663. */
+/** 1inch Swap API v6 (Classic). Supports Robinhood Chain (4663), Ethereum, Base, Arbitrum and BNB Chain. */
 export async function oneInchQuote(req: QuoteRequest): Promise<{ quote: Quote | null; status: ProviderStatus }> {
   const name = "1inch";
   if (!serverEnv.oneInchApiKey) return { quote: null, status: { provider: "1inch", name, state: "not-configured", message: "Set ONEINCH_API_KEY" } };

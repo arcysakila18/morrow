@@ -4,6 +4,7 @@ import { getAddress, isAddress, type Address } from "viem";
 import { usePublicClient } from "wagmi";
 import { erc20Abi, v3FactoryAbi, v3PoolAbi } from "@/lib/abis";
 import { CONTRACTS } from "@/config/contracts";
+import type { SupportedChainId } from "@/config/chains";
 
 export type PoolState = {
   address: Address;
@@ -17,15 +18,15 @@ export type PoolState = {
 };
 
 /** Reads a pool on-chain and confirms it was created by the canonical Uniswap v3 factory. */
-export function useUniswapV3Pool(address?: string) {
-  const client = usePublicClient({ chainId: 4663 });
+export function useUniswapV3Pool(address: string | undefined, chainId: SupportedChainId) {
+  const client = usePublicClient({ chainId });
+  const factory = CONTRACTS[chainId].uniswapV3?.factory;
   return useQuery({
-    queryKey: ["v3-pool", address],
-    enabled: !!client && !!address && isAddress(address),
+    queryKey: ["v3-pool", chainId, address],
+    enabled: !!client && !!factory && !!address && isAddress(address),
     refetchInterval: 15_000,
     queryFn: async (): Promise<PoolState | null> => {
       const pool = getAddress(address!);
-      const factory = CONTRACTS[4663].uniswapV3!.factory;
       const code = await client!.getCode({ address: pool });
       if (!code || code === "0x") return null;
       try {
@@ -37,7 +38,7 @@ export function useUniswapV3Pool(address?: string) {
           client!.readContract({ address: pool, abi: v3PoolAbi, functionName: "slot0" }),
           client!.readContract({ address: pool, abi: v3PoolAbi, functionName: "liquidity" }),
         ]);
-        const canonical = await client!.readContract({ address: factory, abi: v3FactoryAbi, functionName: "getPool", args: [t0, t1, fee] });
+        const canonical = await client!.readContract({ address: factory!, abi: v3FactoryAbi, functionName: "getPool", args: [t0, t1, fee] });
         if (canonical.toLowerCase() !== pool.toLowerCase()) return null;
         const meta = async (a: Address) => ({
           address: a,

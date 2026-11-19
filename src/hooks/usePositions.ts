@@ -4,6 +4,7 @@ import type { Address } from "viem";
 import { useAccount, usePublicClient } from "wagmi";
 import { erc20Abi, positionManagerAbi, v3FactoryAbi, v3PoolAbi } from "@/lib/abis";
 import { CONTRACTS } from "@/config/contracts";
+import { useAppChain } from "./useAppChain";
 
 export type Position = {
   tokenId: bigint;
@@ -24,21 +25,23 @@ const MAX_POSITIONS = 25;
 
 /** Uniswap v3 positions (NonfungiblePositionManager NFTs) owned by the connected wallet. */
 export function usePositions() {
-  const { address, chainId } = useAccount();
-  const client = usePublicClient({ chainId: 4663 });
-  const uni = CONTRACTS[4663].uniswapV3!;
+  const { address } = useAccount();
+  const { chainId, wrongNetwork } = useAppChain();
+  const client = usePublicClient({ chainId });
+  const uni = CONTRACTS[chainId].uniswapV3;
   return useQuery({
-    queryKey: ["positions", address],
-    enabled: !!address && !!client && chainId === 4663,
+    queryKey: ["positions", chainId, address],
+    enabled: !!address && !!client && !!uni && !wrongNetwork,
     refetchInterval: 30_000,
     queryFn: async (): Promise<Position[]> => {
       const c = client!;
-      const n = await c.readContract({ address: uni.positionManager, abi: positionManagerAbi, functionName: "balanceOf", args: [address!] });
+      const u = uni!;
+      const n = await c.readContract({ address: u.positionManager, abi: positionManagerAbi, functionName: "balanceOf", args: [address!] });
       const count = Math.min(Number(n), MAX_POSITIONS);
       const ids = await Promise.all(
-        Array.from({ length: count }, (_, i) => c.readContract({ address: uni.positionManager, abi: positionManagerAbi, functionName: "tokenOfOwnerByIndex", args: [address!, BigInt(i)] })),
+        Array.from({ length: count }, (_, i) => c.readContract({ address: u.positionManager, abi: positionManagerAbi, functionName: "tokenOfOwnerByIndex", args: [address!, BigInt(i)] })),
       );
-      const raw = await Promise.all(ids.map((id) => c.readContract({ address: uni.positionManager, abi: positionManagerAbi, functionName: "positions", args: [id] })));
+      const raw = await Promise.all(ids.map((id) => c.readContract({ address: u.positionManager, abi: positionManagerAbi, functionName: "positions", args: [id] })));
       const metaCache = new Map<string, Promise<{ address: Address; symbol: string; decimals: number }>>();
       const meta = (a: Address) => {
         if (!metaCache.has(a))
@@ -55,7 +58,7 @@ export function usePositions() {
         raw.map(async (p, i) => {
           const [, , token0, token1, fee, tickLower, tickUpper, liquidity, , , owed0, owed1] = p;
           if (liquidity === 0n && owed0 === 0n && owed1 === 0n) return null;
-          const pool = await c.readContract({ address: uni.factory, abi: v3FactoryAbi, functionName: "getPool", args: [token0, token1, fee] });
+          const pool = await c.readContract({ address: u.factory, abi: v3FactoryAbi, functionName: "getPool", args: [token0, token1, fee] });
           const [slot0, m0, m1] = await Promise.all([c.readContract({ address: pool, abi: v3PoolAbi, functionName: "slot0" }), meta(token0), meta(token1)]);
           return {
             tokenId: ids[i],

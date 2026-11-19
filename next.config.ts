@@ -22,6 +22,12 @@ const config: NextConfig = {
       "@base-org/account": baseAccountStub,
       // Optional React Native / Node-only deps referenced by wallet SDKs.
       "@react-native-async-storage/async-storage": false,
+      // Optional Solana peers of Privy. MORROW is EVM-only.
+      "@solana/web3.js": false,
+      "@solana/spl-token": false,
+      "@solana/kit": false,
+      "@solana-program/system": false,
+      "@solana-program/token": false,
     };
     cfg.externals.push("pino-pretty", "lokijs", "encoding");
     return cfg;

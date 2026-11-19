@@ -4,6 +4,7 @@ import { cn } from "@/lib/cn";
 import { explorerUrl } from "@/config/chains";
 import { shortAddress } from "@/lib/format";
 import { IconCheck, IconCopy, IconExternal, IconInfo } from "./Icons";
+import { useAppChain } from "@/hooks/useAppChain";
 
 export function Tooltip({ content, children }: { content: ReactNode; children?: ReactNode }) {
   return (
@@ -33,7 +34,9 @@ export function CopyButton({ value, className }: { value: string; className?: st
   );
 }
 
-export function AddressLink({ address, chainId = 4663, kind = "address", chars = 4, className }: { address: string; chainId?: number; kind?: "address" | "token" | "tx"; chars?: number; className?: string }) {
+export function AddressLink({ address, chainId: chainIdProp, kind = "address", chars = 4, className }: { address: string; chainId?: number; kind?: "address" | "token" | "tx"; chars?: number; className?: string }) {
+  const app = useAppChain();
+  const chainId = chainIdProp ?? app.chainId;
   return (
     <span className={cn("inline-flex items-center gap-1 font-mono text-[13px] text-muted", className)}>
       <a href={explorerUrl(chainId, kind, address)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-ink">

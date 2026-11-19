@@ -1,8 +1,8 @@
-# MORROW — a DEX interface for Robinhood Chain
+# MORROW: a multi-chain DEX interface, Robinhood Chain first
 
 *Trade at your own pace.*
 
-MORROW is an independent, non-custodial trading interface for **Robinhood Chain** (Arbitrum Orbit L2, chain ID `4663`).
+MORROW is an independent, non-custodial trading interface for **Robinhood Chain** (chain ID `4663`, default, with Stock Tokens), **Ethereum** (`1`), **Base** (`8453`), **Arbitrum** (`42161`) and **BNB Chain** (`56`).
 It is not affiliated with or endorsed by Robinhood, and it has not been audited.
 
 ## Quick start
@@ -18,7 +18,7 @@ Needs Node 20 or newer. Works with no keys at all: Uniswap v3 routing, wallet, b
 
 | Variable | Scope | Enables |
 |---|---|---|
-| `NEXT_PUBLIC_WC_PROJECT_ID` | public | WalletConnect (Robinhood Wallet mobile, other mobile wallets) |
+| `NEXT_PUBLIC_PRIVY_APP_ID` | public | Privy app id (default `cmwmfm0ic00la0hjhtqmtgv47`). Wallet login, WalletConnect and email embedded wallets |
 | `NEXT_PUBLIC_RH_RPC_URL` / `RH_RPC_URL` | public / server | Private RPC (e.g. Alchemy). The public RPC is rate-limited |
 | `NEXT_PUBLIC_RH_WS_URL` | public | WebSocket RPC (e.g. `wss://robinhood-mainnet.g.alchemy.com/v2/KEY`) for push-based realtime updates |
 | `ZEROEX_API_KEY` | server | 0x Swap API v2 routing (includes RFQ liquidity for Stock Tokens) |
@@ -28,13 +28,25 @@ Needs Node 20 or newer. Works with no keys at all: Uniswap v3 routing, wallet, b
 
 API keys are only read in `src/config/server-env.ts`, which is marked `server-only`, so they never reach the browser bundle.
 
+## Networks
+- Chains live in `src/config/chains.ts`. Contracts (Uniswap v3, wrapped native, route bases) live in `src/config/contracts.ts`, sourced from Uniswap's per-chain deployment pages.
+- Token lists: core assets per chain; Robinhood Chain adds the Stock Token registry, and other chains add the Uniswap default token list (with official logos).
+- Market data (DexPaprika) and history (Blockscout) are per chain. BNB Chain has no Blockscout, so the portfolio there shows on-chain balances only.
+- Optional per-chain RPCs: `NEXT_PUBLIC_RPC_URL_<id>` / `NEXT_PUBLIC_WS_URL_<id>` (client) and `RPC_URL_<id>` (server).
+- To add a chain: add it to `SUPPORTED_CHAINS` and `CHAIN_META`, add contracts, core tokens and a public RPC, then add a transport in `src/lib/wagmi.ts`.
+
+## Wallets (Privy)
+Connecting goes through Privy (`PrivyProvider` → `QueryClientProvider` → `WagmiProvider` from `@privy-io/wagmi`). All app code keeps using normal wagmi hooks.
+- Login: an external wallet (MetaMask, Rabby, Coinbase Wallet, WalletConnect for mobile wallets including Robinhood Wallet) or email, which creates a self-custodial Privy embedded wallet.
+- In the Privy dashboard: add your domains (e.g. `*.vercel.app` and your custom domain) under **Allowed origins**, enable Email and External wallets, and set a WalletConnect project id if you want mobile wallets.
+
 ## Architecture
 
 ```
 src/
   config/        chains.ts (4663 / 46630), contracts.ts (cited addresses), site.ts, server-env.ts
   lib/
-    wagmi.ts     wagmi config: injected (EIP-6963) + WalletConnect
+    wagmi.ts     wagmi config via @privy-io/wagmi (Privy supplies the connectors)
     abis.ts      ERC-20, WETH, QuoterV2, SwapRouter02, v3 Factory/Pool, PositionManager
     tokens/      Token model, core tokens, server registry (Robinhood Stock Token API + on-chain validation)
     swap/
@@ -73,6 +85,14 @@ Reads follow the wallet's chain when it is a supported chain. Otherwise they fol
 - Fee APR is only shown when the fee tier can be read unambiguously. It is a backward-looking 24h estimate.
 - Wallet history comes from Blockscout, and balances come from the RPC and Blockscout.
 - The token list is ETH, WETH, USDG and the official Stock Token registry (`api.robinhood.com/rhj/assets`). Every contract's symbol and decimals are confirmed on-chain. Users can import other tokens by address after an on-chain check and a risk acknowledgement.
+
+### Token logos
+Each token shows its own official artwork, resolved server-side in `src/lib/tokens/icons.ts` and cached for a day:
+1. Manual overrides in `src/config/token-logos.ts`
+2. ETH, WETH and USDG from CoinGecko
+3. Stock Tokens: the underlying company's logo by ticker (logo.dev when `LOGO_DEV_TOKEN` is set, otherwise Financial Modeling Prep), then the company's official domain (e.g. `SPCX → spacex.com`)
+4. Blockscout `icon_url`, then DexScreener profile `imageUrl`
+5. Otherwise a monogram. Images are never invented.
 
 ## Dependencies and gaps (please read)
 | Item | Status |

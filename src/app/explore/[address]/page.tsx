@@ -14,13 +14,15 @@ import { VerifiedBadge } from "@/components/ui/Verified";
 import { useVerifiedSet } from "@/hooks/useVerified";
 import { useLivePrice } from "@/hooks/useLivePrice";
 import { Flash, LiveBadge } from "@/components/ui/Live";
+import { useAppChain } from "@/hooks/useAppChain";
 
 type Data = { token: MarketToken; pools: MarketPool[]; chart: { t: number; c: number }[]; chartPool: MarketPool | null };
 
 export default function TokenPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = use(params);
-  const q = useApi<Data>(`/api/market/token/${address}`, { refetchInterval: 20_000 });
-  const live = useLivePrice(address);
+  const { chainId } = useAppChain();
+  const q = useApi<Data>(`/api/market/token/${address}?chainId=${chainId}`, { refetchInterval: 20_000 });
+  const live = useLivePrice(address, chainId);
   const { isVerified, isLoading: vLoading } = useVerifiedSet();
   const verified = isVerified(address);
 
@@ -78,16 +80,16 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
             </div>
             <div className="mt-5 border-t border-line pt-4">
               <div className="text-xs text-muted">Contract</div>
-              <AddressLink address={address} kind="token" chars={8} className="mt-1" />
+              <AddressLink address={address} chainId={chainId} kind="token" chars={8} className="mt-1" />
             </div>
           </div>
-          <Link href={`/?out=${address}`} className="block">
+          <Link href={`/?out=${address}&chain=${chainId}`} className="block">
             <Button variant="primary" size="xl" block>Swap {t?.symbol ?? ""}</Button>
           </Link>
           {!vLoading && !verified ? (
-            <Notice tone="warn">Unverified token. It isn&apos;t in Robinhood Chain&apos;s official registries, and anyone can create a token with any name. Check the contract address before trading.</Notice>
+            <Notice tone="warn">Unverified token. It isn&apos;t in an official token registry for this network, and anyone can create a token with any name. Check the contract address before trading.</Notice>
           ) : (
-            <Notice>Listed in an official Robinhood Chain registry. Always double-check the contract address.</Notice>
+            <Notice>Listed in an official token registry. Always double-check the contract address.</Notice>
           )}
         </aside>
       </div>

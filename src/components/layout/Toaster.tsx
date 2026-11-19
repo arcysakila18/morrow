@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { usePublicClient } from "wagmi";
+import { getPublicClient } from "@wagmi/core";
+import { wagmiConfig } from "@/lib/wagmi";
 import { cn } from "@/lib/cn";
 import { explorerUrl } from "@/config/chains";
 import { Spinner } from "@/components/ui/Spinner";
@@ -22,7 +23,6 @@ export function Toaster() {
   const [toasts, setToasts] = useState<Toast[]>([]);
   const mountedAt = useRef(Date.now());
   const seen = useRef(new Map<string, LocalTx["status"]>());
-  const client = usePublicClient({ chainId: 4663 });
 
   // Raise or update a toast whenever a session transaction appears or changes status.
   useEffect(() => {
@@ -41,20 +41,19 @@ export function Toaster() {
 
   // Background receipt watcher for pending transactions from this session.
   useEffect(() => {
-    if (!client) return;
     const id = setInterval(() => {
       txStore
         .get()
-        .filter((t) => t.status === "pending" && t.chainId === 4663 && t.createdAt >= mountedAt.current)
+        .filter((t) => t.status === "pending" && t.createdAt >= mountedAt.current)
         .forEach((t) =>
-          client
-            .getTransactionReceipt({ hash: t.hash })
+          getPublicClient(wagmiConfig, { chainId: t.chainId as never })
+            ?.getTransactionReceipt({ hash: t.hash })
             .then((r) => updateTx(t.hash, { status: r.status === "success" ? "success" : "failed" }))
             .catch(() => {}),
         );
     }, POLL_MS);
     return () => clearInterval(id);
-  }, [client]);
+  }, []);
 
   if (!toasts.length) return null;
   return (

@@ -3,6 +3,7 @@ import { useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWatchBlockNumber } from "wagmi";
 import { create } from "./store";
+import { useAppChain } from "./useAppChain";
 
 /** Latest Robinhood Chain block seen by this tab, and when. */
 export const liveStore = create<{ block: bigint | null; at: number }>({ block: null, at: 0 });
@@ -17,14 +18,15 @@ const FAST_KEYS = new Set(["balance", "readContracts", "readContract"]);
 const SLOW_KEYS = new Set(["quote", "positions", "v3-pool"]);
 
 /**
- * Drives realtime updates from new blocks: on a WebSocket RPC this is push-based
+ * Drives realtime updates from new blocks on the active chain: on a WebSocket RPC this is push-based
  * (eth_subscribe newHeads); otherwise it polls the head once per second.
  */
 export function useLiveSync() {
   const qc = useQueryClient();
   const last = useRef({ balances: 0, quotes: 0 });
+  const { chainId } = useAppChain();
   useWatchBlockNumber({
-    chainId: 4663,
+    chainId,
     pollingInterval: WATCH_POLL_MS,
     emitOnBegin: true,
     onBlockNumber(block) {

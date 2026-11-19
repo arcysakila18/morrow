@@ -16,6 +16,7 @@ import type { ProviderStatus, Quote, QuoteRequest } from "../types";
  */
 export async function rialtoQuote(_req: QuoteRequest): Promise<{ quote: Quote | null; status: ProviderStatus }> {
   const name = "Rialto";
+  if (_req.chainId !== 4663) return { quote: null, status: { provider: "rialto", name, state: "unsupported", message: "Robinhood Chain only" } };
   if (!serverEnv.rialtoApiUrl || !serverEnv.rialtoApiKey) {
     return { quote: null, status: { provider: "rialto", name, state: "not-configured", message: "Partner API access required" } };
   }

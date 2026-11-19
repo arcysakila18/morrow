@@ -9,15 +9,18 @@ import type { MarketToken } from "@/lib/market/dexpaprika";
 import { useVerifiedSet } from "@/hooks/useVerified";
 import { cn } from "@/lib/cn";
 import { LiveBadge } from "@/components/ui/Live";
+import { useAppChain } from "@/hooks/useAppChain";
+import { getChain } from "@/config/chains";
 
 const MIN_LIQUIDITY = 10_000;
 
 export default function ExplorePage() {
+  const { chainId } = useAppChain();
   const [tab, setTab] = useState<"volume" | "new">("volume");
   const [q, setQ] = useState("");
   const dq = useDebounced(q.trim(), 300);
-  const list = useApi<{ tokens: MarketToken[] }>(dq.length >= 2 ? null : `/api/market/tokens?order=${tab}`, { refetchInterval: 30_000 });
-  const search = useApi<{ tokens: MarketToken[] }>(dq.length >= 2 ? `/api/market/search?q=${encodeURIComponent(dq)}` : null);
+  const list = useApi<{ tokens: MarketToken[] }>(dq.length >= 2 ? null : `/api/market/tokens?order=${tab}&chainId=${chainId}`, { refetchInterval: 30_000 });
+  const search = useApi<{ tokens: MarketToken[] }>(dq.length >= 2 ? `/api/market/search?q=${encodeURIComponent(dq)}&chainId=${chainId}` : null);
   const active = dq.length >= 2 ? search : list;
   const [verifiedOnly, setVerifiedOnly] = useState(false);
   const [hideLow, setHideLow] = useState(true);
@@ -29,7 +32,7 @@ export default function ExplorePage() {
   return (
     <div className="mx-auto max-w-[1200px] px-4 pt-10 sm:px-6 sm:pt-14">
       <div className="flex items-center gap-3"><h1 className="text-[32px] font-semibold tracking-[-0.025em]">Explore</h1><LiveBadge /></div>
-      <p className="mt-1.5 text-[15px] text-muted">Tokens trading on Robinhood Chain, ranked by on-chain activity.</p>
+      <p className="mt-1.5 text-[15px] text-muted">Tokens trading on {getChain(chainId).name}, ranked by on-chain activity.</p>
       <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Segmented
           value={tab}
@@ -67,7 +70,7 @@ export default function ExplorePage() {
         <TokenTable tokens={shown} loading={active.isLoading} error={active.isError ? (active.error as Error).message : undefined} />
       </div>
       <p className="mt-3 text-[11px] text-faint">
-        {tab === "volume" ? "Trending = highest 24h DEX volume." : "Recently added = tokens from the newest pools."} Data from DexPaprika, indexed from Robinhood Chain swaps. Low liquidity = under $10k (verified tokens always shown). Listing is not an endorsement.
+        {tab === "volume" ? "Trending = highest 24h DEX volume." : "Recently added = tokens from the newest pools."} Data from DexPaprika, indexed from on-chain swaps. Low liquidity = under $10k (verified tokens always shown). Listing is not an endorsement.
       </p>
     </div>
   );

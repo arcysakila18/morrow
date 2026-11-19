@@ -6,11 +6,11 @@ import { Skeleton } from "@/components/ui/Spinner";
 import { formatPct, formatUsd } from "@/lib/format";
 import type { MarketPool } from "@/lib/market/dexpaprika";
 
-export function PairIcons({ a, b, aAddress, bAddress, size = 28 }: { a: string; b: string; aAddress?: string; bAddress?: string; size?: number }) {
+export function PairIcons({ a, b, aAddress, bAddress, chainId, size = 28 }: { a: string; b: string; aAddress?: string; bAddress?: string; chainId?: number; size?: number }) {
   return (
     <span className="flex shrink-0 items-center">
-      <TokenIcon symbol={a} address={aAddress} size={size} className="ring-2 ring-surface" />
-      <TokenIcon symbol={b} address={bAddress} size={size} className="-ml-2 ring-2 ring-surface" />
+      <TokenIcon symbol={a} address={aAddress} chainId={chainId} size={size} className="ring-2 ring-surface" />
+      <TokenIcon symbol={b} address={bAddress} chainId={chainId} size={size} className="-ml-2 ring-2 ring-surface" />
     </span>
   );
 }

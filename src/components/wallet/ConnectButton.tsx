@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useAccount, useDisconnect } from "wagmi";
+import { usePrivy } from "@privy-io/react-auth";
 import { Button } from "@/components/ui/Button";
 import { CopyButton } from "@/components/ui/misc";
 import { IconExternal } from "@/components/ui/Icons";
@@ -25,6 +26,7 @@ export function Avatar({ address, size = 22 }: { address: string; size?: number 
 export function ConnectButton() {
   const { address, isConnected, connector } = useAccount();
   const { disconnect } = useDisconnect();
+  const { ready, authenticated, logout, user } = usePrivy();
   const { chainId } = useAppChain();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -38,7 +40,7 @@ export function ConnectButton() {
 
   if (!mounted || !isConnected || !address)
     return (
-      <Button variant="primary" size="md" onClick={openWalletModal} className="rounded-full px-4">
+      <Button variant="primary" size="md" onClick={openWalletModal} loading={mounted && !ready} className="rounded-full px-4">
         <span>
           Connect<span className="hidden sm:inline"> wallet</span>
         </span>
@@ -62,7 +64,7 @@ export function ConnectButton() {
               <div className="flex items-center gap-1 font-mono text-[13px]">
                 {shortAddress(address, 6)} <CopyButton value={address} />
               </div>
-              <div className="text-xs text-muted">via {connector?.name ?? "wallet"}</div>
+              <div className="truncate text-xs text-muted">{user?.email?.address ? `${user.email.address} · ` : ""}via {connector?.name ?? "wallet"}</div>
             </div>
           </div>
           <div className="my-1 h-px bg-line" />
@@ -73,9 +75,10 @@ export function ConnectButton() {
             View on explorer <IconExternal width={14} height={14} className="text-faint" />
           </a>
           <button
-            onClick={() => {
-              disconnect();
+            onClick={async () => {
               setOpen(false);
+              disconnect();
+              if (authenticated) await logout();
             }}
             className="block w-full rounded-xl px-3 py-2.5 text-left text-sm text-down hover:bg-down/5"
           >

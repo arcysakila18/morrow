@@ -2,7 +2,7 @@
   "name": "morrow",
   "version": "0.1.0",
   "private": true,
-  "description": "MORROW — an independent decentralized exchange interface for Robinhood Chain",
+  "description": "MORROW \u2014 an independent decentralized exchange interface for Robinhood Chain",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -11,7 +11,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
+    "@privy-io/react-auth": "^2.0.0",
+    "@privy-io/wagmi": "^1.0.0",
     "@tanstack/react-query": "^5.85.0",
+    "@wagmi/core": "^2.17.0",
     "next": "^15.5.0",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
@@ -27,5 +30,7 @@
     "tailwindcss": "^4.1.0",
     "typescript": "^5.9.0"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }

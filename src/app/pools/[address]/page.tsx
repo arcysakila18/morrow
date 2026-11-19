@@ -11,11 +11,13 @@ import { PairIcons } from "@/components/pools/PoolTable";
 import { formatAmount, formatPct, formatUsd } from "@/lib/format";
 import { tickToPrice } from "@/lib/uniswap/math";
 import type { MarketPool } from "@/lib/market/dexpaprika";
+import { useAppChain } from "@/hooks/useAppChain";
 
 export default function PoolPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = use(params);
-  const market = useApi<{ pool: MarketPool; chart: { t: number; c: number }[] }>(`/api/market/pool/${address}`, { refetchInterval: 60_000 });
-  const chain = useUniswapV3Pool(address);
+  const { chainId } = useAppChain();
+  const market = useApi<{ pool: MarketPool; chart: { t: number; c: number }[] }>(`/api/market/pool/${address}?chainId=${chainId}`, { refetchInterval: 60_000 });
+  const chain = useUniswapV3Pool(address, chainId);
   const p = market.data?.pool;
   const s = chain.data;
   const a = s?.token0.symbol ?? p?.tokens[0]?.symbol ?? "—";
@@ -32,7 +34,7 @@ export default function PoolPage({ params }: { params: Promise<{ address: string
         {(s || p?.feeLabel) && <span className="tabular rounded-lg bg-surface-2 px-2 py-0.5 text-[13px] text-muted">{s ? `${s.fee / 10_000}%` : p?.feeLabel}</span>}
       </div>
       <div className="mt-2 flex items-center gap-2 text-sm text-muted">
-        {p?.dex ?? (s ? "Uniswap v3" : "")} · <AddressLink address={address} />
+        {p?.dex ?? (s ? "Uniswap v3" : "")} · <AddressLink address={address} chainId={chainId} />
       </div>
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_380px]">
@@ -60,8 +62,8 @@ export default function PoolPage({ params }: { params: Promise<{ address: string
               <div className="tabular mt-3 grid gap-2 text-muted sm:grid-cols-2">
                 <div>Current price: <span className="text-ink">{formatAmount(tickToPrice(s.tick, s.token0.decimals, s.token1.decimals), 6)} {s.token1.symbol} per {s.token0.symbol}</span></div>
                 <div>Tick: <span className="text-ink">{s.tick}</span> · Spacing {s.tickSpacing}</div>
-                <div>{s.token0.symbol}: <AddressLink address={s.token0.address} kind="token" /></div>
-                <div>{s.token1.symbol}: <AddressLink address={s.token1.address} kind="token" /></div>
+                <div>{s.token0.symbol}: <AddressLink address={s.token0.address} chainId={chainId} kind="token" /></div>
+                <div>{s.token1.symbol}: <AddressLink address={s.token1.address} chainId={chainId} kind="token" /></div>
               </div>
               <p className="mt-3 text-xs text-up">Verified: deployed by the canonical Uniswap v3 factory.</p>
             </div>
@@ -71,7 +73,7 @@ export default function PoolPage({ params }: { params: Promise<{ address: string
           {chain.isLoading ? (
             <div className="card p-5"><Skeleton className="h-64 w-full" /></div>
           ) : s ? (
-            <AddLiquidity pool={s} />
+            <AddLiquidity pool={s} chainId={chainId} />
           ) : (
             <Notice>
               MORROW currently supports adding liquidity to Uniswap v3 pools. This pool uses a different protocol

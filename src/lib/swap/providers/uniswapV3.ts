@@ -26,16 +26,16 @@ function encodePath(p: Path): `0x${string}` {
 }
 
 /**
- * Uniswap v3 on-chain quoting and execution on Robinhood Chain.
+ * Uniswap v3 on-chain quoting and execution (any chain in the contract registry).
  * Needs no API key: pool discovery via the factory, pricing via QuoterV2 (eth_call),
  * execution via SwapRouter02 multicall with a deadline and amountOutMinimum.
  */
 export async function uniswapV3Quote(client: PublicClient, req: QuoteRequest, symbols: (a: Address) => string): Promise<Quote | null> {
   const c = CONTRACTS[req.chainId as SupportedChainId];
   const uni = c?.uniswapV3;
-  if (!uni || !c.weth) return null;
+  if (!uni || !c.wrappedNative) return null;
 
-  const weth = getAddress(c.weth);
+  const weth = getAddress(c.wrappedNative);
   const inNative = eq(req.tokenIn, NATIVE_ADDRESS);
   const outNative = eq(req.tokenOut, NATIVE_ADDRESS);
   const tIn = inNative ? weth : getAddress(req.tokenIn);
@@ -43,7 +43,7 @@ export async function uniswapV3Quote(client: PublicClient, req: QuoteRequest, sy
   if (eq(tIn, tOut)) return null;
 
   // 1. Discover which pools exist.
-  const mids = [c.weth, c.usdg].filter((m): m is Address => !!m && !eq(m, tIn) && !eq(m, tOut)).map((m) => getAddress(m));
+  const mids = (c.routeBases ?? []).filter((m) => !eq(m, tIn) && !eq(m, tOut)).map((m) => getAddress(m));
   const pairs: Array<[Address, Address, number]> = [];
   for (const f of UNISWAP_V3_FEE_TIERS) pairs.push([tIn, tOut, f]);
   for (const m of mids) for (const f of HOP_FEES) pairs.push([tIn, m, f], [m, tOut, f]);

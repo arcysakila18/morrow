@@ -5,7 +5,17 @@ import { serverEnv } from "@/config/server-env";
  * DexPaprika — indexed DEX data for Robinhood Chain (network id "robinhood").
  * Docs: https://docs.dexpaprika.com. All values come from on-chain swaps it indexes.
  */
-const NETWORK = "robinhood";
+import { CHAIN_META, isSupportedChain } from "@/config/chains";
+
+/** DexPaprika network id for a chain, or null when the chain isn't indexed. */
+export function networkFor(chainId: number): string | null {
+  return isSupportedChain(chainId) ? CHAIN_META[chainId].network ?? null : null;
+}
+
+/** Reads ?chainId= from a request and resolves the DexPaprika network (default Robinhood Chain). */
+export function networkFromRequest(req: Request): string | null {
+  return networkFor(Number(new URL(req.url).searchParams.get("chainId") ?? 4663));
+}
 const base = () => (serverEnv.dexPaprikaApiKey ? "https://api-pro.dexpaprika.com" : "https://api.dexpaprika.com");
 
 async function get<T>(path: string, revalidate = 30): Promise<T> {
@@ -77,7 +87,7 @@ function mapPool(p: Record<string, any>): MarketPool {
   };
 }
 
-export async function getPools(opts: { orderBy?: "volume_usd_24h" | "liquidity_usd" | "created_at"; limit?: number; token?: string; cursor?: string } = {}) {
+export async function getPools(NETWORK: string, opts: { orderBy?: "volume_usd_24h" | "liquidity_usd" | "created_at"; limit?: number; token?: string; cursor?: string } = {}) {
   const q = new URLSearchParams({ order_by: opts.orderBy ?? "volume_usd_24h", sort: "desc", limit: String(opts.limit ?? 50) });
   if (opts.token) q.set("token_address", opts.token);
   if (opts.cursor) q.set("cursor", opts.cursor);
@@ -86,12 +96,12 @@ export async function getPools(opts: { orderBy?: "volume_usd_24h" | "liquidity_u
   return { pools: items.map(mapPool), nextCursor: (j.next_cursor as string | undefined) ?? null };
 }
 
-export async function getPool(address: string) {
+export async function getPool(NETWORK: string, address: string) {
   const j = await get<Record<string, any>>(`/networks/${NETWORK}/pools/${address}`, 30);
   return mapPool(j);
 }
 
-export async function getToken(address: string): Promise<MarketToken> {
+export async function getToken(NETWORK: string, address: string): Promise<MarketToken> {
   const j = await get<Record<string, any>>(`/networks/${NETWORK}/tokens/${address}`, 20);
   const s = j.summary ?? {};
   const d = s["24h"] ?? {};
@@ -109,7 +119,7 @@ export async function getToken(address: string): Promise<MarketToken> {
   };
 }
 
-export async function getPrices(addresses: string[]) {
+export async function getPrices(NETWORK: string, addresses: string[]) {
   const out: Record<string, number> = {};
   for (let i = 0; i < addresses.length; i += 10) {
     const chunk = addresses.slice(i, i + 10);
@@ -124,7 +134,7 @@ export async function getPrices(addresses: string[]) {
   return out;
 }
 
-export async function getOhlcv(pool: string, days = 7) {
+export async function getOhlcv(NETWORK: string, pool: string, days = 7) {
   const start = new Date(Date.now() - days * 86400_000).toISOString().slice(0, 10);
   const j = await get<unknown>(`/networks/${NETWORK}/pools/${pool}/ohlcv?start=${start}&interval=${days > 2 ? "4h" : "1h"}&limit=200`, 300);
   const rows = Array.isArray(j) ? j : [];
@@ -134,9 +144,9 @@ export async function getOhlcv(pool: string, days = 7) {
 }
 
 /** Tokens ranked by 24h pool volume, with per-token market details. */
-export async function getTokenRankings(orderBy: "volume_usd_24h" | "created_at", limit = 24) {
-  const { pools } = await getPools({ orderBy, limit: 60 });
-  const QUOTES = new Set(["weth", "eth", "usdg", "usdc", "usdt", "usde"]);
+export async function getTokenRankings(NETWORK: string, orderBy: "volume_usd_24h" | "created_at", limit = 24) {
+  const { pools } = await getPools(NETWORK, { orderBy, limit: 60 });
+  const QUOTES = new Set(["weth", "eth", "usdg", "usdc", "usdt", "usde", "wbnb", "bnb", "dai", "usdc.e"]);
   const seen = new Set<string>();
   const picks: string[] = [];
   for (const p of pools) {
@@ -148,11 +158,11 @@ export async function getTokenRankings(orderBy: "volume_usd_24h" | "created_at",
     }
     if (picks.length >= limit) break;
   }
-  const tokens = await Promise.all(picks.slice(0, limit).map((a) => getToken(a).catch(() => null)));
+  const tokens = await Promise.all(picks.slice(0, limit).map((a) => getToken(NETWORK, a).catch(() => null)));
   return tokens.filter((t): t is MarketToken => !!t);
 }
 
-export async function searchTokens(query: string) {
+export async function searchTokens(NETWORK: string, query: string) {
   const j = await get<Record<string, any>>(`/search?query=${encodeURIComponent(query)}`, 60);
   const tokens: Record<string, any>[] = (j.tokens ?? []).filter((t: Record<string, any>) => t.chain === NETWORK);
   return tokens.slice(0, 20).map((t) => ({

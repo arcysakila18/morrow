@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/Spinner";
 import { IconExternal } from "@/components/ui/Icons";
 import { Avatar } from "@/components/wallet/ConnectButton";
 import { openWalletModal } from "@/components/wallet/WalletModal";
-import { explorerUrl, type SupportedChainId } from "@/config/chains";
+import { BLOCKSCOUT_API, CHAIN_META, explorerUrl, getChain, type SupportedChainId } from "@/config/chains";
 import { CONTRACTS } from "@/config/contracts";
 import { cn } from "@/lib/cn";
 import { formatTokenAmount, formatUsd, shortAddress, timeAgo } from "@/lib/format";
@@ -34,7 +34,7 @@ export default function PortfolioPage() {
       <div className="mx-auto max-w-[1200px] px-4 pt-14 sm:px-6">
         <h1 className="text-[32px] font-semibold tracking-[-0.025em]">Portfolio</h1>
         <div className="card mt-8">
-          <EmptyState title="Connect a wallet to see your portfolio" body="Balances, allocation and activity are read directly from Robinhood Chain." action={<Button variant="primary" size="lg" onClick={openWalletModal}>Connect wallet</Button>} />
+          <EmptyState title="Connect a wallet to see your portfolio" body="Balances, allocation and activity are read directly from the chain." action={<Button variant="primary" size="lg" onClick={openWalletModal}>Connect wallet</Button>} />
         </div>
       </div>
     );
@@ -42,24 +42,27 @@ export default function PortfolioPage() {
 }
 
 function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: SupportedChainId }) {
-  const mainnet = chainId === 4663;
+  const indexed = !!BLOCKSCOUT_API[chainId];
+  const hasPrices = !!CHAIN_META[chainId].network;
+  const wrapped = CONTRACTS[chainId].wrappedNative?.toLowerCase();
+  const nativeSym = getChain(chainId).nativeCurrency;
   const native = useBalance({ address, chainId, query: { refetchInterval: 15_000 } });
   const balances = useQuery({
-    queryKey: ["bs-balances", address],
-    enabled: mainnet,
+    queryKey: ["bs-balances", chainId, address],
+    enabled: indexed,
     refetchInterval: 15_000,
     queryFn: async () => {
-      const r = await fetch(`/api/explorer/addresses/${address}/token-balances`);
+      const r = await fetch(`/api/explorer/addresses/${address}/token-balances?chainId=${chainId}`);
       if (!r.ok) throw new Error("Explorer balances unavailable");
       return (await r.json()) as BsTokenBalance[];
     },
   });
   const txs = useQuery({
-    queryKey: ["bs-txs", address],
-    enabled: mainnet,
+    queryKey: ["bs-txs", chainId, address],
+    enabled: indexed,
     refetchInterval: 20_000,
     queryFn: async () => {
-      const r = await fetch(`/api/explorer/addresses/${address}/transactions`);
+      const r = await fetch(`/api/explorer/addresses/${address}/transactions?chainId=${chainId}`);
       if (!r.ok) throw new Error("Explorer history unavailable");
       return ((await r.json()).items ?? []) as BsTx[];
     },
@@ -77,19 +80,19 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
   );
 
   const priceQ = useQuery({
-    queryKey: ["pf-prices", erc20.map((t) => t.address).join(",")],
-    enabled: mainnet,
+    queryKey: ["pf-prices", chainId, erc20.map((t) => t.address).join(",")],
+    enabled: hasPrices,
     refetchInterval: 60_000,
     queryFn: async () => {
-      const list = [CONTRACTS[4663].weth!, ...erc20.map((t) => t.address)].map((a) => a.toLowerCase());
-      const r = await fetch(`/api/market/prices?tokens=${Array.from(new Set(list)).join(",")}`);
+      const list = [...(wrapped ? [wrapped] : []), ...erc20.map((t) => t.address)].map((a) => a.toLowerCase());
+      const r = await fetch(`/api/market/prices?tokens=${Array.from(new Set(list)).join(",")}&chainId=${chainId}`);
       return ((await r.json()).prices ?? {}) as Record<string, number>;
     },
   });
   const prices = priceQ.data ?? {};
 
   const rows = [
-    ...(native.data ? [{ address: "native", symbol: "ETH", name: "Ether", decimals: 18, raw: native.data.value, icon: undefined as string | undefined, price: prices[CONTRACTS[4663].weth!.toLowerCase()] }] : []),
+    ...(native.data ? [{ address: "native", symbol: nativeSym.symbol, name: nativeSym.name, decimals: nativeSym.decimals, raw: native.data.value, icon: undefined as string | undefined, price: wrapped ? prices[wrapped] : undefined }] : []),
     ...erc20.map((t) => ({ ...t, price: prices[t.address.toLowerCase()] })),
   ].map((r) => ({ ...r, usd: r.price != null ? Number(formatUnits(r.raw, r.decimals)) * r.price : undefined }));
   rows.sort((x, y) => (y.usd ?? -1) - (x.usd ?? -1));
@@ -109,7 +112,7 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
         </div>
       </div>
 
-      {!mainnet && <Notice className="mt-6">Portfolio indexing is available on Robinhood Chain mainnet. Showing your native balance only.</Notice>}
+      {!indexed && <Notice className="mt-6">Token indexing isn&apos;t available for {getChain(chainId).name}. Showing your native balance only.</Notice>}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="card p-6">
@@ -141,12 +144,12 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
 
       <h2 className="mt-10 text-[17px] font-semibold">Tokens</h2>
       <div className="card mt-4 overflow-hidden">
-        {balances.isLoading && mainnet ? (
+        {balances.isLoading && indexed ? (
           <div className="space-y-3 p-5">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
         ) : !rows.length && balances.isError ? (
           <EmptyState title="Balances unavailable" body="The explorer couldn't be reached. Try again shortly." />
         ) : !rows.length ? (
-          <EmptyState title="No tokens yet" body="Bridge ETH to Robinhood Chain to get started." action={<Link href="/"><Button variant="outline">Go to swap</Button></Link>} />
+          <EmptyState title="No tokens yet" body={`Bridge ${nativeSym.symbol} to ${getChain(chainId).name} to get started.`} action={<Link href="/"><Button variant="outline">Go to swap</Button></Link>} />
         ) : (
           <table className="w-full text-sm">
             <thead className="border-b border-line text-xs text-muted">
@@ -162,7 +165,7 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
                 <tr key={r.address} className="border-b border-line/70 last:border-0">
                   <td className="py-3 pl-5">
                     <div className="flex items-center gap-3">
-                      <TokenIcon symbol={r.symbol} src={r.icon} address={r.address === "native" ? undefined : r.address} size={32} />
+                      <TokenIcon symbol={r.symbol} src={r.icon} address={r.address === "native" ? "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" : r.address} chainId={chainId} size={32} />
                       <div className="min-w-0">
                         <div className="font-medium">{r.symbol}</div>
                         <div className="max-w-[160px] truncate text-xs text-muted">{r.name}</div>

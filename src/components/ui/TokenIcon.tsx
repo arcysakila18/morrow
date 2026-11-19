@@ -2,22 +2,23 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/cn";
-import { CONTRACTS, NATIVE_ADDRESS } from "@/config/contracts";
+import { NATIVE_ADDRESS } from "@/config/contracts";
+import { useAppChain } from "@/hooks/useAppChain";
 
 const isEthLike = (s: string) => /^(W?ETH)$/i.test(s);
 
-/** Resolves an official logo for a token address via /api/token-icon (cached for a day). */
-function useOfficialIcon(address?: string) {
+/** Resolves an official logo for a token on a chain via /api/token-icon (cached for a day). */
+function useOfficialIcon(address: string | undefined, chainId: number) {
   const a = address?.toLowerCase();
-  const lookup = a === NATIVE_ADDRESS.toLowerCase() ? CONTRACTS[4663].weth!.toLowerCase() : a;
+  const lookup = a === NATIVE_ADDRESS.toLowerCase() ? "native" : a;
   return useQuery({
-    queryKey: ["token-icon", lookup],
-    enabled: !!lookup && /^0x[0-9a-f]{40}$/.test(lookup),
+    queryKey: ["token-icon-v3", chainId, lookup],
+    enabled: !!lookup && (lookup === "native" || /^0x[0-9a-f]{40}$/.test(lookup)),
     staleTime: 24 * 3_600_000,
     gcTime: 24 * 3_600_000,
     retry: false,
     queryFn: async () => {
-      const r = await fetch(`/api/token-icon/${lookup}`);
+      const r = await fetch(`/api/token-icon/${lookup}?chainId=${chainId}`);
       if (!r.ok) return null;
       return ((await r.json()).url as string | null) ?? null;
     },
@@ -32,16 +33,21 @@ export function TokenIcon({
   size = 28,
   className,
   stock,
+  chainId,
 }: {
   symbol: string;
   src?: string;
   address?: string;
+  /** Defaults to the chain the app is showing. */
+  chainId?: number;
   size?: number;
   className?: string;
   stock?: boolean;
 }) {
-  const official = useOfficialIcon(src ? undefined : address);
-  const url = src || official || undefined;
+  // The token's own official logo wins; a passed-in src is only a fallback.
+  const app = useAppChain();
+  const official = useOfficialIcon(address, chainId ?? app.chainId);
+  const url = official || src || undefined;
   const [failed, setFailed] = useState(false);
   useEffect(() => setFailed(false), [url]);
   const label = symbol.replace(/[^A-Za-z0-9]/g, "").slice(0, symbol.length > 4 ? 2 : 3).toUpperCase() || "?";

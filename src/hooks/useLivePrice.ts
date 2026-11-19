@@ -17,14 +17,14 @@ function readPrice(data: string): number | null {
  * Live USD price for one token via SSE. Returns null until the first tick (or if streaming
  * is unavailable), so callers keep showing the last polled price.
  */
-export function useLivePrice(address?: string) {
+export function useLivePrice(address?: string, chainId = 4663) {
   const [price, setPrice] = useState<number | null>(null);
   const [connected, setConnected] = useState(false);
   useEffect(() => {
     if (!address || typeof EventSource === "undefined") return;
     setPrice(null);
     let failures = 0;
-    const es = new EventSource(`/api/market/stream?address=${address}`);
+    const es = new EventSource(`/api/market/stream?address=${address}&chainId=${chainId}`);
     es.onopen = () => setConnected(true);
     es.onmessage = (e) => {
       const p = readPrice(e.data);
@@ -35,6 +35,6 @@ export function useLivePrice(address?: string) {
       if (++failures >= 5) es.close(); // give up quietly; polling stays in place
     };
     return () => es.close();
-  }, [address]);
+  }, [address, chainId]);
   return { price, connected };
 }

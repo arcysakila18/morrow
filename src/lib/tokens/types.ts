@@ -1,6 +1,7 @@
 import type { Address } from "viem";
 
-export type TokenSource = "core" | "stock" | "custom";
+/** core: built-in assets · stock: Robinhood Stock Token registry · list: Uniswap default token list · custom: user import */
+export type TokenSource = "core" | "stock" | "list" | "custom";
 
 export type Token = {
   chainId: number;

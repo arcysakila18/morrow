@@ -9,13 +9,13 @@ import { Notice } from "@/components/ui/misc";
 import { LiveBadge } from "@/components/ui/Live";
 import { openWalletModal } from "@/components/wallet/WalletModal";
 import { CONTRACTS } from "@/config/contracts";
-import { robinhoodChain, type SupportedChainId } from "@/config/chains";
+import { getChain, isSupportedChain, type SupportedChainId } from "@/config/chains";
 import { formatAmount, formatUsd, safeParseUnits } from "@/lib/format";
 import { humanizeError } from "@/lib/errors";
-import { isNative, sameToken } from "@/lib/tokens/core";
+import { defaultQuoteSymbol, isNative, sameToken } from "@/lib/tokens/core";
 import type { Token } from "@/lib/tokens/types";
 import type { Quote } from "@/lib/swap/types";
-import { useAppChain } from "@/hooks/useAppChain";
+import { useAppChain, viewChainStore } from "@/hooks/useAppChain";
 import { findToken, useTokenList } from "@/hooks/useTokenList";
 import { useBalances } from "@/hooks/useBalances";
 import { usePrices } from "@/hooks/usePrices";
@@ -32,6 +32,7 @@ const GAS_RESERVE = 200_000_000_000_000n; // 0.0002 ETH
 
 export function SwapCard() {
   const { chainId, wrongNetwork } = useAppChain();
+  const viewChain = viewChainStore.use();
   const { address, isConnected } = useAccount();
   const { switchChainAsync, isPending: switching } = useSwitchChain();
   const settings = settingsStore.use();
@@ -49,10 +50,17 @@ export function SwapCard() {
   const [reviewed, setReviewed] = useState<{ quote: Quote; tokenIn: Token; tokenOut: Token; usdIn?: number; usdOut?: number } | null>(null);
   const [switchErr, setSwitchErr] = useState<string | null>(null);
 
+  // Deep link ?chain=<id> selects the network to browse (wallet switching stays manual).
+  useEffect(() => {
+    const c = Number(params?.get("chain"));
+    if (isSupportedChain(c) && !isConnected) viewChainStore.set(c);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Defaults & deep links (?in=&out=), reset when the chain changes.
   useEffect(() => {
     const inT = findToken(tokens, params?.get("in")) ?? tokens.find(isNative);
-    const outT = findToken(tokens, params?.get("out")) ?? tokens.find((t) => t.symbol === "USDG");
+    const outT = findToken(tokens, params?.get("out")) ?? tokens.find((t) => t.symbol === defaultQuoteSymbol(chainId));
     setTokenIn((cur) => (cur && cur.chainId === chainId && tokens.some((t) => sameToken(t, cur)) ? cur : inT));
     setTokenOut((cur) => (cur && cur.chainId === chainId && tokens.some((t) => sameToken(t, cur)) ? cur : sameToken(outT, inT) ? undefined : outT));
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -148,13 +156,13 @@ export function SwapCard() {
   if (!mounted || !isConnected) cta = { label: "Connect wallet", onClick: openWalletModal, variant: "primary" };
   else if (wrongNetwork)
     cta = {
-      label: "Switch to Robinhood Chain",
+      label: `Switch to ${getChain(viewChain).name}`,
       loading: switching,
       variant: "ink",
       onClick: async () => {
         setSwitchErr(null);
         try {
-          await switchChainAsync({ chainId: robinhoodChain.id });
+          await switchChainAsync({ chainId: viewChain });
         } catch (e) {
           setSwitchErr(humanizeError(e));
         }
@@ -256,7 +264,7 @@ export function SwapCard() {
       {switchErr && <Notice tone="error" className="mt-3">{switchErr}</Notice>}
       {mounted && !hasInfra && (
         <Notice className="mt-3">
-          No verified swap contracts are published for Robinhood Chain Testnet yet. Switch to mainnet to trade.
+          No verified swap contracts are published for this network yet. Switch to a mainnet to trade.
         </Notice>
       )}
       {noRouteInfo && amountIn && (

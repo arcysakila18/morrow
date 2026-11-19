@@ -1,19 +1,22 @@
 import { isAddress } from "viem";
 import { serverEnv } from "@/config/server-env";
+import { networkFromRequest } from "@/lib/market/dexpaprika";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // the browser's EventSource reconnects automatically after this
 
 /**
  * Proxies DexPaprika's live price stream (Server-Sent Events) for one Robinhood Chain token.
- * Upstream: https://streaming.dexpaprika.com/sse/prices?chain=robinhood&address=…&method=token_price
+ * Upstream: https://streaming.dexpaprika.com/sse/prices?chain=${network}&address=…&method=token_price
  */
 export async function GET(req: Request) {
   const address = new URL(req.url).searchParams.get("address") ?? "";
   if (!isAddress(address)) return new Response("Invalid address", { status: 400 });
+  const network = networkFromRequest(req);
+  if (!network) return new Response("Unsupported network", { status: 404 });
 
   const upstream = await fetch(
-    `https://streaming.dexpaprika.com/sse/prices?chain=robinhood&address=${address.toLowerCase()}&method=token_price`,
+    `https://streaming.dexpaprika.com/sse/prices?chain=${network}&address=${address.toLowerCase()}&method=token_price`,
     {
       headers: { accept: "text/event-stream", ...(serverEnv.dexPaprikaApiKey ? { Authorization: serverEnv.dexPaprikaApiKey } : {}) },
       signal: req.signal,

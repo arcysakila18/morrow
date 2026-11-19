@@ -16,20 +16,21 @@ import { useAppChain } from "@/hooks/useAppChain";
 import { useTxRunner, type TxStep } from "@/hooks/useTxRunner";
 import { settingsStore } from "@/components/swap/SettingsPopover";
 import type { Token } from "@/lib/tokens/types";
+import type { SupportedChainId } from "@/config/chains";
 
-export function AddLiquidity({ pool }: { pool: PoolState }) {
+export function AddLiquidity({ pool, chainId }: { pool: PoolState; chainId: SupportedChainId }) {
   const { address, isConnected } = useAccount();
   const { wrongNetwork } = useAppChain();
   const settings = settingsStore.use();
-  const client = usePublicClient({ chainId: 4663 });
-  const npm = CONTRACTS[4663].uniswapV3!.positionManager;
+  const client = usePublicClient({ chainId });
+  const npm = CONTRACTS[chainId].uniswapV3!.positionManager;
   const [preset, setPreset] = useState<"full" | "wide" | "narrow">("full");
   const [input, setInput] = useState<{ side: 0 | 1; value: string }>({ side: 0, value: "" });
   const runner = useTxRunner();
 
-  const t0: Token = { chainId: 4663, address: pool.token0.address, symbol: pool.token0.symbol, name: pool.token0.symbol, decimals: pool.token0.decimals, source: "custom" };
-  const t1: Token = { chainId: 4663, address: pool.token1.address, symbol: pool.token1.symbol, name: pool.token1.symbol, decimals: pool.token1.decimals, source: "custom" };
-  const balances = useBalances([t0, t1], 4663);
+  const t0: Token = { chainId, address: pool.token0.address, symbol: pool.token0.symbol, name: pool.token0.symbol, decimals: pool.token0.decimals, source: "custom" };
+  const t1: Token = { chainId, address: pool.token1.address, symbol: pool.token1.symbol, name: pool.token1.symbol, decimals: pool.token1.decimals, source: "custom" };
+  const balances = useBalances([t0, t1], chainId);
 
   const { lower, upper } = rangeForPreset(pool.tick, pool.tickSpacing, preset);
   const sqrtP = sqrtPriceX96ToFloat(pool.sqrtPriceX96);
@@ -101,7 +102,7 @@ export function AddLiquidity({ pool }: { pool: PoolState }) {
           ],
         },
       ],
-      4663,
+      chainId,
     );
   };
 
@@ -170,7 +171,7 @@ export function AddLiquidity({ pool }: { pool: PoolState }) {
       {!isConnected ? (
         <Button variant="primary" size="lg" block className="mt-4" onClick={openWalletModal}>Connect wallet</Button>
       ) : wrongNetwork ? (
-        <Button variant="soft" size="lg" block className="mt-4" disabled>Switch to Robinhood Chain</Button>
+        <Button variant="soft" size="lg" block className="mt-4" disabled>Switch network in your wallet</Button>
       ) : (
         <Button variant="primary" size="lg" block className="mt-4" disabled={!ok || !!insufficient || busy} loading={busy} onClick={submit}>
           {busy ? (runner.state.phase === "sign" ? "Confirm in wallet" : "Waiting for confirmation") : insufficient ? "Insufficient balance" : ok ? "Add liquidity" : "Enter an amount"}

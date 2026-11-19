@@ -9,7 +9,7 @@ export default function SwapPage() {
       <div className="mb-8 text-center sm:mb-10">
         <h1 className="text-[34px] font-semibold leading-[1.05] tracking-[-0.03em] sm:text-[52px]">{SITE.tagline}</h1>
         <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-muted">
-          Swap tokens and Stock Tokens on Robinhood Chain, routed for the best available price. Non-custodial, always.
+          Swap Stock Tokens on Robinhood Chain, and crypto on Ethereum, Base, Arbitrum and BNB Chain. Best-price routing, non-custodial, always.
         </p>
       </div>
       <Suspense>

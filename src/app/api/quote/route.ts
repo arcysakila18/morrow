@@ -3,6 +3,7 @@ import { getAddress, isAddress } from "viem";
 import { zeroExQuote } from "@/lib/swap/providers/zeroEx";
 import { oneInchQuote } from "@/lib/swap/providers/oneInch";
 import { rialtoQuote } from "@/lib/swap/providers/rialto";
+import { AGGREGATOR_CHAINS } from "@/config/contracts";
 import { toWire, type ProviderStatus, type QuoteRequest, type WireQuote } from "@/lib/swap/types";
 
 export const dynamic = "force-dynamic";
@@ -17,7 +18,8 @@ export async function POST(request: Request) {
   }
   const { chainId, tokenIn, tokenOut, amountIn, slippageBps, taker } = body as Record<string, string | number | undefined>;
 
-  if (Number(chainId) !== 4663) return NextResponse.json({ quotes: [], statuses: [] });
+  const cid = Number(chainId);
+  if (!AGGREGATOR_CHAINS.has(cid)) return NextResponse.json({ quotes: [], statuses: [] });
   if (typeof tokenIn !== "string" || !isAddress(tokenIn) || typeof tokenOut !== "string" || !isAddress(tokenOut))
     return NextResponse.json({ error: "Invalid token address" }, { status: 400 });
   if (typeof amountIn !== "string" || !/^\d+$/.test(amountIn) || BigInt(amountIn) <= 0n)
@@ -27,7 +29,7 @@ export async function POST(request: Request) {
   if (taker !== undefined && (typeof taker !== "string" || !isAddress(taker))) return NextResponse.json({ error: "Invalid taker" }, { status: 400 });
 
   const req: QuoteRequest = {
-    chainId: 4663,
+    chainId: cid,
     tokenIn: getAddress(tokenIn),
     tokenOut: getAddress(tokenOut),
     amountIn: BigInt(amountIn),

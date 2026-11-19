@@ -16,10 +16,14 @@ import { amountsForLiquidity, sqrtPriceX96ToFloat, tickToPrice, toRaw, MIN_TICK,
 import { usePositions, type Position } from "@/hooks/usePositions";
 import { useTxRunner } from "@/hooks/useTxRunner";
 import { settingsStore } from "@/components/swap/SettingsPopover";
+import { useAppChain } from "@/hooks/useAppChain";
+import type { SupportedChainId } from "@/config/chains";
 import { PairIcons } from "./PoolTable";
 
 export function Positions() {
-  const { isConnected, chainId } = useAccount();
+  const { isConnected } = useAccount();
+  const { chainId, wrongNetwork } = useAppChain();
+  const hasUni = !!CONTRACTS[chainId].uniswapV3;
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
   const q = usePositions();
@@ -30,9 +34,9 @@ export function Positions() {
       <h2 className="text-[17px] font-semibold">Your positions</h2>
       <div className="card mt-4">
         {!mounted || !isConnected ? (
-          <EmptyState title="Connect a wallet to view positions" body="Your Uniswap v3 liquidity positions on Robinhood Chain will appear here." action={<Button variant="primary" onClick={openWalletModal}>Connect wallet</Button>} />
-        ) : chainId !== 4663 ? (
-          <EmptyState title="Positions are available on Robinhood Chain mainnet" />
+          <EmptyState title="Connect a wallet to view positions" body="Your Uniswap v3 liquidity positions on this network will appear here." action={<Button variant="primary" onClick={openWalletModal}>Connect wallet</Button>} />
+        ) : wrongNetwork || !hasUni ? (
+          <EmptyState title="Positions aren't available on this network" body="Switch to a supported network to view Uniswap v3 positions." />
         ) : q.isLoading ? (
           <div className="space-y-3 p-5">
             <Skeleton className="h-14 w-full" />
@@ -45,24 +49,24 @@ export function Positions() {
         ) : (
           <ul className="divide-y divide-line">
             {q.data.map((p) => (
-              <PositionRow key={p.tokenId.toString()} p={p} onRemove={() => setRemoving(p)} />
+              <PositionRow key={p.tokenId.toString()} p={p} chainId={chainId} onRemove={() => setRemoving(p)} />
             ))}
           </ul>
         )}
       </div>
-      {removing && <RemoveModal p={removing} onClose={() => { setRemoving(null); q.refetch(); }} />}
+      {removing && <RemoveModal p={removing} chainId={chainId} onClose={() => { setRemoving(null); q.refetch(); }} />}
     </section>
   );
 }
 
-function PositionRow({ p, onRemove }: { p: Position; onRemove: () => void }) {
+function PositionRow({ p, chainId, onRemove }: { p: Position; chainId: SupportedChainId; onRemove: () => void }) {
   const inRange = p.tick >= p.tickLower && p.tick < p.tickUpper;
   const full = p.tickLower <= MIN_TICK + 60000 && p.tickUpper >= MAX_TICK - 60000;
   const { amount0, amount1 } = amountsForLiquidity(p.liquidity, sqrtPriceX96ToFloat(p.sqrtPriceX96), p.tickLower, p.tickUpper);
   return (
     <li className="flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center">
       <Link href={`/pools/${p.pool}`} className="flex flex-1 items-center gap-3">
-        <PairIcons a={p.token0.symbol} b={p.token1.symbol} aAddress={p.token0.address} bAddress={p.token1.address} size={32} />
+        <PairIcons a={p.token0.symbol} b={p.token1.symbol} aAddress={p.token0.address} bAddress={p.token1.address} chainId={chainId} size={32} />
         <div>
           <div className="flex items-center gap-2 font-medium">
             {p.token0.symbol} / {p.token1.symbol}
@@ -89,12 +93,12 @@ function PositionRow({ p, onRemove }: { p: Position; onRemove: () => void }) {
   );
 }
 
-function RemoveModal({ p, onClose }: { p: Position; onClose: () => void }) {
+function RemoveModal({ p, chainId, onClose }: { p: Position; chainId: SupportedChainId; onClose: () => void }) {
   const { address } = useAccount();
   const [pct, setPct] = useState(100);
   const runner = useTxRunner();
   const settings = settingsStore.use();
-  const npm = CONTRACTS[4663].uniswapV3!.positionManager;
+  const npm = CONTRACTS[chainId].uniswapV3!.positionManager;
   const liq = (p.liquidity * BigInt(pct)) / 100n;
   const est = amountsForLiquidity(liq, sqrtPriceX96ToFloat(p.sqrtPriceX96), p.tickLower, p.tickUpper);
   const slip = BigInt(10_000 - settings.slippageBps);
@@ -108,7 +112,7 @@ function RemoveModal({ p, onClose }: { p: Position; onClose: () => void }) {
     const calls: `0x${string}`[] = [];
     if (liq > 0n) calls.push(encodeFunctionData({ abi: positionManagerAbi, functionName: "decreaseLiquidity", args: [{ tokenId: p.tokenId, liquidity: liq, amount0Min: min0, amount1Min: min1, deadline }] }));
     calls.push(encodeFunctionData({ abi: positionManagerAbi, functionName: "collect", args: [{ tokenId: p.tokenId, recipient: address, amount0Max: maxUint128, amount1Max: maxUint128 }] }));
-    runner.run([{ label: `Remove ${p.token0.symbol}/${p.token1.symbol} liquidity`, kind: "remove-liquidity", address: npm, abi: positionManagerAbi, functionName: "multicall", args: [calls] }], 4663);
+    runner.run([{ label: `Remove ${p.token0.symbol}/${p.token1.symbol} liquidity`, kind: "remove-liquidity", address: npm, abi: positionManagerAbi, functionName: "multicall", args: [calls] }], chainId);
   };
 
   return (
