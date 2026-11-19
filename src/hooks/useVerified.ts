@@ -4,6 +4,7 @@ import { useTokenList } from "./useTokenList";
 import { useAppChain } from "./useAppChain";
 import { useSolanaTokens } from "./useSolana";
 import { isNativeLike } from "@/config/token-logos";
+import { SITE } from "@/config/site";
 
 /** Addresses from official registries only (core assets, Robinhood Stock Token API, Uniswap default list). Imported tokens never count. */
 export function useVerifiedSet() {
@@ -15,5 +16,5 @@ export function useVerifiedSet() {
   const solSet = useMemo(() => new Set((sol.data ?? []).filter((t) => t.verified).map((t) => t.mint)), [sol.data]);
   if (isSolana) return { isVerified: (a?: string) => !!a && solSet.has(a), isLoading: sol.isLoading };
   // The network's native gas token (ETH, BNB) is always verified.
-  return { isVerified: (a?: string) => !!a && (isNativeLike(a) || set.has(a.toLowerCase())), isLoading };
+  return { isVerified: (a?: string) => !!a && (isNativeLike(a) || set.has(a.toLowerCase()) || (!!SITE.token.address && a.toLowerCase() === SITE.token.address.toLowerCase())), isLoading };
 }

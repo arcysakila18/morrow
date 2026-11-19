@@ -8,6 +8,7 @@
  *    ticker logo exists (e.g. private companies). The logo is then taken from that domain.
  */
 import { NATIVE_ADDRESS } from "./contracts";
+import { SITE } from "./site";
 
 /** Some indexers list the native gas token under the zero address. */
 const ZERO = "0x0000000000000000000000000000000000000000";
@@ -59,6 +60,7 @@ export function logoOverride(chainId: number, address?: string): string | undefi
   if (!address) return undefined;
   const a = address.toLowerCase();
   if (a === "native" || a === NATIVE_ADDRESS.toLowerCase() || a === ZERO) return chainId === 56 ? BNB : chainId === 101 ? undefined : ETH;
+  if (SITE.token.address && a === SITE.token.address.toLowerCase()) return "/logo-mark.png";
   return CORE_LOGOS[chainId]?.[a] ?? LOGO_OVERRIDES[a];
 }
 

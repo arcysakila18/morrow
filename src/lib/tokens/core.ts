@@ -2,6 +2,7 @@ import { getAddress, type Address } from "viem";
 import { CONTRACTS, NATIVE_ADDRESS } from "@/config/contracts";
 import { getChain, type SupportedChainId } from "@/config/chains";
 import type { Token } from "./types";
+import { SITE } from "@/config/site";
 
 export function nativeToken(chainId: number): Token {
   const c = getChain(chainId).nativeCurrency;
@@ -48,10 +49,19 @@ const CORE: Partial<Record<SupportedChainId, Core[]>> = {
   ],
 };
 
+/** The official Morrow token (src/config/site.ts), once its contract address is set. */
+export function morrowToken(): Token | null {
+  const t = SITE.token;
+  if (!t.address || !/^0x[0-9a-fA-F]{40}$/.test(t.address)) return null;
+  return { chainId: t.chainId, address: getAddress(t.address), symbol: t.symbol, name: t.name, decimals: t.decimals, logoURI: "/logo-mark.png", source: "core" };
+}
+
 export function coreTokens(chainId: SupportedChainId): Token[] {
+  const morrow = morrowToken();
   return [
     nativeToken(chainId),
     ...(CORE[chainId] ?? []).map(([a, symbol, name, decimals]) => ({ chainId, address: getAddress(a), symbol, name, decimals, source: "core" as const })),
+    ...(morrow && morrow.chainId === chainId ? [morrow] : []),
   ];
 }
 

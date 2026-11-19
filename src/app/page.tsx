@@ -9,6 +9,7 @@ import { Networks } from "@/components/home/Networks";
 import { HowItWorks } from "@/components/home/HowItWorks";
 import { Faq } from "@/components/home/Faq";
 import { SectionHeader } from "@/components/home/Section";
+import { ContractAddress } from "@/components/home/ContractAddress";
 import { SITE } from "@/config/site";
 
 const SOURCES = ["Uniswap v3", "0x", "1inch", "LI.FI"];
@@ -52,6 +53,9 @@ export default function HomePage() {
             {SOURCES.map((s) => (
               <span key={s} className="font-semibold tracking-tight text-muted">{s}</span>
             ))}
+          </div>
+          <div className="fade-up relative mt-5" style={{ animationDelay: "760ms" }}>
+            <ContractAddress />
           </div>
         </div>
         <div className="fade-up mt-12" style={{ animationDelay: "850ms" }}>

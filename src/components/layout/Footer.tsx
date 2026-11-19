@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/brand/Logo";
 import { SITE } from "@/config/site";
+import { ContractAddress } from "@/components/home/ContractAddress";
 
 type L = { label: string; href: string; ext?: boolean };
 
@@ -20,6 +21,7 @@ export function Footer() {
             <div>
               <Logo />
               <p className="mt-4 max-w-xs text-[15px] leading-relaxed text-muted">{SITE.tagline}</p>
+              <ContractAddress className="mt-5" />
             </div>
             <div className="grid grid-cols-2 gap-x-6 gap-y-12 sm:grid-cols-4">
               {cols.map((c) => (

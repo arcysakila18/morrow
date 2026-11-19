@@ -3,6 +3,19 @@ export const SITE = {
   tagline: "Trade at your own pace.",
   url: "https://morrowswap.trade",
   description: "Swap stock tokens and crypto across Robinhood Chain, Ethereum, Base, Arbitrum and BNB Chain. Non-custodial, no added fee.",
+  /**
+   * Official Morrow token. Leave `address` empty to show "Coming soon".
+   * When it is set, the site shows the contract with a copy button and explorer link, and the token
+   * is added to the verified list (swap picker, Explore, ticker) with the Morrow logo.
+   * chainId: 4663 Robinhood Chain · 1 Ethereum · 8453 Base · 42161 Arbitrum · 56 BNB Chain
+   */
+  token: {
+    address: "" as string,
+    chainId: 4663 as number,
+    symbol: "MORROW",
+    name: "Morrow",
+    decimals: 18,
+  },
   links: {
     x: "https://x.com/morrowswap",
     /** Empty until a server exists; empty links are hidden. */
