@@ -6,13 +6,16 @@ import { TokenIcon } from "@/components/ui/TokenIcon";
 import { Change } from "@/components/ui/misc";
 import { formatUsd } from "@/lib/format";
 import type { MarketToken } from "@/lib/market/dexpaprika";
+import { useVerifiedSet } from "@/hooks/useVerified";
 
-/** Endless strip of live prices for the most-traded tokens. Pauses on hover. Hidden without data. */
+/** Endless strip of live prices for the most-traded verified tokens. Pauses on hover. Hidden without data. */
 export function LiveTicker() {
   const { marketChainId } = useAppChain();
   const q = useApi<{ tokens: MarketToken[] }>(`/api/market/tokens?order=volume&chainId=${marketChainId}`, { refetchInterval: 30_000 });
-  const list = (q.data?.tokens ?? []).slice(0, 14);
-  if (list.length < 4) return null;
+  const { isVerified } = useVerifiedSet();
+  // Verified tokens with a live price only.
+  const list = (q.data?.tokens ?? []).filter((t) => isVerified(t.address) && t.priceUsd != null).slice(0, 14);
+  if (list.length < 3) return null;
   const row = (dup: boolean) =>
     list.map((t) => (
       <Link

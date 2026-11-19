@@ -60,7 +60,8 @@ export function ConnectButton() {
         className="flex h-10 items-center gap-2 rounded-full border border-line bg-surface pl-1.5 pr-3.5 text-sm font-medium transition hover:border-line-strong"
       >
         <Avatar address={address} size={28} />
-        <span className="tabular">{shortAddress(address)}</span>
+        <span className="tabular hidden sm:inline">{shortAddress(address)}</span>
+        <span className="tabular sm:hidden">{shortAddress(address, 3)}</span>
       </button>
       {open && (
         <div className="fixed inset-x-3 top-[4.25rem] z-40 animate-rise rounded-[20px] border border-line bg-surface p-2 sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-72" style={{ boxShadow: "var(--shadow-pop)" }}>

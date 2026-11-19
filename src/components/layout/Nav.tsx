@@ -27,7 +27,11 @@ export function Nav() {
         <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-6 px-4 sm:px-6">
           <Link href="/" className="shrink-0" aria-label="Morrow home">
             <span className="hidden sm:block"><Logo /></span>
-            <span className="block sm:hidden"><LogoMark /></span>
+            {/* Phones: the mark plus a slightly smaller wordmark (hidden only on very narrow screens). */}
+            <span className="flex items-center gap-2 sm:hidden">
+              <LogoMark className="h-8 w-8" />
+              <span className="text-[13px] font-semibold tracking-[0.16em] text-ink max-[359px]:hidden">MORROW</span>
+            </span>
           </Link>
           <nav className="hidden items-center gap-1 md:flex">
             {NAV.map((n) => (

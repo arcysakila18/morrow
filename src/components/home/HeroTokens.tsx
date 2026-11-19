@@ -5,6 +5,7 @@ import { useAppChain } from "@/hooks/useAppChain";
 import { TokenIcon } from "@/components/ui/TokenIcon";
 import { cn } from "@/lib/cn";
 import type { MarketToken } from "@/lib/market/dexpaprika";
+import { useVerifiedSet } from "@/hooks/useVerified";
 
 /** Slots around the hero. The first two also show on phones (above the headline). */
 const SLOTS = [
@@ -22,7 +23,8 @@ const SLOTS = [
 export function HeroTokens() {
   const { marketChainId } = useAppChain();
   const q = useApi<{ tokens: MarketToken[] }>(`/api/market/tokens?order=volume&chainId=${marketChainId}`, { refetchInterval: 30_000 });
-  const tokens = q.data?.tokens ?? [];
+  const { isVerified } = useVerifiedSet();
+  const tokens = (q.data?.tokens ?? []).filter((t) => isVerified(t.address));
   if (!tokens.length) return null;
   return (
     <div aria-hidden="true" className="pointer-events-none absolute inset-0">

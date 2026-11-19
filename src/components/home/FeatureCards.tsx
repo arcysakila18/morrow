@@ -14,6 +14,7 @@ import { useInView } from "@/components/home/Reveal";
 import { formatUsd } from "@/lib/format";
 import { cn } from "@/lib/cn";
 import type { MarketToken } from "@/lib/market/dexpaprika";
+import { useVerifiedSet } from "@/hooks/useVerified";
 
 type Tone = "lime" | "sky" | "violet" | "mint" | "peach";
 const TONES: Record<Tone, { bg: string; text: string; hex: string }> = {
@@ -119,8 +120,10 @@ function RouteViz() {
 function LiveTokens() {
   const { marketChainId } = useAppChain();
   const q = useApi<{ tokens: MarketToken[] }>(`/api/market/tokens?order=volume&chainId=${marketChainId}`, { refetchInterval: 30_000 });
-  if (q.isError || (q.data && !q.data.tokens.length)) return null;
-  const list = q.data?.tokens.slice(0, 3);
+  const { isVerified } = useVerifiedSet();
+  const verified = q.data?.tokens.filter((t) => isVerified(t.address) && t.priceUsd != null);
+  if (q.isError || (verified && !verified.length)) return null;
+  const list = verified?.slice(0, 3);
   return (
     <div className="space-y-2.5">
       {(list ?? [null, null, null]).map((t, i) =>
