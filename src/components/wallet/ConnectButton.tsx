@@ -12,15 +12,21 @@ import { useAppChain } from "@/hooks/useAppChain";
 import { disconnectSolana, useSolanaWallet } from "@/hooks/useSolanaWallet";
 import { openWalletModal } from "./WalletModal";
 
+const AVATAR_HUES = ["#D9F36A", "#7BE0B4", "#7CC7FF", "#B9A3FF", "#FFB38A", "#F2E58C"];
+
 export function Avatar({ address, size = 22 }: { address: string; size?: number }) {
-  // Deterministic, quiet two-tone disc derived from the address.
+  // Deterministic soft gradient orb derived from the address (brand palette, no dark half).
   let n = 0;
   for (let i = 0; i < address.length; i++) n = (n * 31 + address.charCodeAt(i)) >>> 0;
-  const angle = n % 360;
+  const a = AVATAR_HUES[n % AVATAR_HUES.length];
+  const b = AVATAR_HUES[(n >>> 3) % AVATAR_HUES.length === n % AVATAR_HUES.length ? ((n >>> 3) + 1) % AVATAR_HUES.length : (n >>> 3) % AVATAR_HUES.length];
+  const x = 20 + ((n >>> 6) % 60);
+  const y = 20 + ((n >>> 12) % 60);
   return (
     <span
-      className="inline-block shrink-0 rounded-full"
-      style={{ width: size, height: size, background: `conic-gradient(from ${angle}deg, #101114 0 50%, #D9F36A 50% 75%, #e9e9e4 75%)` }}
+      aria-hidden
+      className="inline-block shrink-0 rounded-full ring-1 ring-white/10"
+      style={{ width: size, height: size, background: `radial-gradient(circle at ${x}% ${y}%, ${a} 0%, ${a} 18%, ${b} 70%, #2a2b30 120%)` }}
     />
   );
 }
@@ -57,9 +63,9 @@ export function ConnectButton() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen((o) => !o)}
-        className="flex h-10 items-center gap-2 rounded-full border border-line bg-surface pl-1.5 pr-3.5 text-sm font-medium transition hover:border-line-strong"
+        className="flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-full border border-line bg-surface pl-1.5 pr-3.5 text-sm font-medium transition hover:border-line-strong"
       >
-        <Avatar address={address} size={28} />
+        <Avatar address={address} size={26} />
         <span className="tabular hidden sm:inline">{shortAddress(address)}</span>
         <span className="tabular sm:hidden">{shortAddress(address, 3)}</span>
       </button>
