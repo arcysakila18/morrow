@@ -2,7 +2,7 @@ import "server-only";
 import { getAddress, isAddress } from "viem";
 import { BLOCKSCOUT_API, CHAIN_META, type SupportedChainId } from "@/config/chains";
 import { CONTRACTS } from "@/config/contracts";
-import { COMPANY_DOMAINS, LOGO_OVERRIDES } from "@/config/token-logos";
+import { COMPANY_DOMAINS, logoOverride } from "@/config/token-logos";
 import { serverEnv } from "@/config/server-env";
 import { getUniswapList, ipfsToHttps } from "./server-registry";
 
@@ -16,7 +16,8 @@ import { getUniswapList, ipfsToHttps } from "./server-registry";
  *  5. CoinGecko by contract address
  *  6. Blockscout token metadata (icon_url)
  *  7. DexScreener token profile (project-submitted imageUrl)
- *  8. Robinhood's generic Stock Token mark (stocks only, last resort)
+ *  8. GeckoTerminal token info (project-submitted image_url)
+ *  9. Robinhood's generic Stock Token mark (stocks only, last resort)
  * Returns null when nothing is found; the UI then shows a monogram.
  */
 
@@ -169,11 +170,11 @@ async function dexscreenerIcon(chain: string, address: string): Promise<string |
 export async function getTokenIcon(chainId: SupportedChainId, address: string): Promise<string | null> {
   const meta = CHAIN_META[chainId];
   const c = CONTRACTS[chainId];
+  const fixed = logoOverride(chainId, address);
+  if (fixed) return fixed;
   if (address === "native") return (await geckoCoinImages())[meta.nativeCoingecko] ?? null;
   if (!isAddress(address)) return null;
   const a = getAddress(address).toLowerCase();
-
-  if (LOGO_OVERRIDES[a]) return LOGO_OVERRIDES[a];
 
   if (a === c.wrappedNative?.toLowerCase()) {
     const g = await geckoCoinImages();
@@ -196,7 +197,30 @@ export async function getTokenIcon(chainId: SupportedChainId, address: string): 
     (meta.coingecko ? await geckoByContract(meta.coingecko, a) : null) ??
     (await blockscoutIcon(chainId, a)) ??
     (meta.dexscreener ? await dexscreenerIcon(meta.dexscreener, a) : null) ??
+    (await geckoTerminalIcon(chainId, a)) ??
     stock?.rhImage ??
     null
   );
+}
+
+/** GeckoTerminal network ids. */
+const GT_NETWORK: Partial<Record<SupportedChainId, string>> = { 4663: "robinhood", 1: "eth", 8453: "base", 42161: "arbitrum", 56: "bsc" };
+
+/** GeckoTerminal's public token info: image uploaded by the project. Placeholder images are ignored. */
+async function geckoTerminalIcon(chainId: SupportedChainId, address: string): Promise<string | null> {
+  const network = GT_NETWORK[chainId];
+  if (!network) return null;
+  try {
+    const r = await fetch(`https://api.geckoterminal.com/api/v2/networks/${network}/tokens/${address}/info`, {
+      headers: { accept: "application/json" },
+      next: { revalidate: DAY },
+      signal: AbortSignal.timeout(6000),
+    });
+    if (!r.ok) return null;
+    const url = (await r.json())?.data?.attributes?.image_url;
+    if (!isHttpUrl(url) || /missing/i.test(url)) return null;
+    return (await imageExists(url)) ? url : null;
+  } catch {
+    return null;
+  }
 }

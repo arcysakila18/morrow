@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/cn";
 import { NATIVE_ADDRESS } from "@/config/contracts";
+import { logoOverride } from "@/config/token-logos";
 import { useAppChain } from "@/hooks/useAppChain";
 
 const isEthLike = (s: string) => /^(W?ETH)$/i.test(s);
@@ -13,7 +14,7 @@ function useOfficialIcon(address: string | undefined, chainId: number) {
   const a = solana ? address : address?.toLowerCase();
   const lookup = a?.toLowerCase() === NATIVE_ADDRESS.toLowerCase() ? "native" : a;
   return useQuery({
-    queryKey: ["token-icon-v3", chainId, lookup],
+    queryKey: ["token-icon-v4", chainId, lookup],
     enabled: !!lookup && (lookup === "native" || (solana ? /^[1-9A-HJ-NP-Za-km-z]{32,44}$/.test(lookup) : /^0x[0-9a-f]{40}$/.test(lookup))),
     staleTime: 24 * 3_600_000,
     gcTime: 24 * 3_600_000,
@@ -48,6 +49,9 @@ export function TokenIcon({
   // A src from an official list (Uniswap list, Jupiter, Blockscout) is used directly; otherwise,
   // or if it fails to load, the token's official logo is resolved server-side.
   const app = useAppChain();
+  // Core assets (ETH, WETH, USDC…) always use their canonical artwork.
+  const fixed = logoOverride(chainId ?? app.marketChainId, address);
+  if (fixed) src = fixed;
   const [srcFailed, setSrcFailed] = useState(false);
   const [failed, setFailed] = useState(false);
   const useSrc = !!src && !srcFailed;
