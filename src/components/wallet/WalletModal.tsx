@@ -17,7 +17,11 @@ export function WalletModal() {
   useEffect(() => {
     if (!req || !ready) return;
     walletModalStore.set(false);
-    if (!authenticated) return login();
+    // Never return a value from an effect: login() returns a Promise, and React would call it as a cleanup.
+    if (!authenticated) {
+      login();
+      return;
+    }
     connectWallet();
   }, [req, ready, authenticated, login, connectWallet]);
 
