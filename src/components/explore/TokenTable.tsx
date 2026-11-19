@@ -11,7 +11,7 @@ import { Flash } from "@/components/ui/Live";
 
 export function TokenTable({ tokens, loading, error }: { tokens?: MarketToken[]; loading?: boolean; error?: string }) {
   const { isVerified } = useVerifiedSet();
-  if (error) return <EmptyState title="Market data unavailable" body={`${error}. MORROW doesn't display placeholder data — try again shortly.`} />;
+  if (error) return <EmptyState title="Market data unavailable" body={`${error}. Morrow doesn't display placeholder data — try again shortly.`} />;
   if (!loading && tokens && !tokens.length) return <EmptyState title="No tokens found" />;
   return (
     <div className="card overflow-hidden">

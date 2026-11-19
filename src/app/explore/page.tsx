@@ -10,12 +10,12 @@ import { useVerifiedSet } from "@/hooks/useVerified";
 import { cn } from "@/lib/cn";
 import { LiveBadge } from "@/components/ui/Live";
 import { useAppChain } from "@/hooks/useAppChain";
-import { getChain } from "@/config/chains";
+import { chainName } from "@/config/chains";
 
 const MIN_LIQUIDITY = 10_000;
 
 export default function ExplorePage() {
-  const { chainId } = useAppChain();
+  const { marketChainId: chainId, isSolana } = useAppChain();
   const [tab, setTab] = useState<"volume" | "new">("volume");
   const [q, setQ] = useState("");
   const dq = useDebounced(q.trim(), 300);
@@ -31,8 +31,8 @@ export default function ExplorePage() {
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 pt-10 sm:px-6 sm:pt-14">
-      <div className="flex items-center gap-3"><h1 className="text-[32px] font-semibold tracking-[-0.025em]">Explore</h1><LiveBadge /></div>
-      <p className="mt-1.5 text-[15px] text-muted">Tokens trading on {getChain(chainId).name}, ranked by on-chain activity.</p>
+      <div className="flex items-center gap-3"><h1 className="text-[32px] font-semibold tracking-[-0.025em]">Explore</h1>{!isSolana && <LiveBadge />}</div>
+      <p className="mt-1.5 text-[15px] text-muted">Tokens trading on {chainName(chainId)}, ranked by on-chain activity.</p>
       <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
         <Segmented
           value={tab}

@@ -1,6 +1,6 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { isAddress } from "viem";
-import { getPools, networkFromRequest } from "@/lib/market/dexpaprika";
+import { getPools, isTokenAddress, networkFromRequest } from "@/lib/market/dexpaprika";
 
 export async function GET(req: Request) {
   const sp = new URL(req.url).searchParams;
@@ -8,7 +8,7 @@ export async function GET(req: Request) {
   if (!network) return NextResponse.json({ error: "Market data isn't available for this network" , pools: [] }, { status: 404 });
   const order = sp.get("order");
   const token = sp.get("token") ?? undefined;
-  if (token && !isAddress(token)) return NextResponse.json({ error: "Invalid token" }, { status: 400 });
+  if (token && !isTokenAddress(network, token)) return NextResponse.json({ error: "Invalid token" }, { status: 400 });
   try {
     const data = await getPools(network, {
       orderBy: order === "tvl" ? "liquidity_usd" : order === "new" ? "created_at" : "volume_usd_24h",

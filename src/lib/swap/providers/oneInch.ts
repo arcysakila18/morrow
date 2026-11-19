@@ -4,14 +4,31 @@ import { NATIVE_ADDRESS } from "@/config/contracts";
 import { serverEnv } from "@/config/server-env";
 import type { ProviderStatus, Quote, QuoteRequest, RouteHop } from "../types";
 
-const BASE = "https://api.1inch.dev/swap/v6.0";
+/** 1inch moved to api.1inch.com (Business Portal); keys from the old dev portal may still be on api.1inch.dev. */
+const HOSTS = process.env.ONEINCH_API_BASE ? [process.env.ONEINCH_API_BASE] : ["https://api.1inch.com/swap/v6.0", "https://api.1inch.dev/swap/v6.0"];
+let preferred = 0;
+
+/** GET against the 1inch Swap API, falling back to the legacy host on auth/not-found/network errors. */
+async function oneInchFetch(path: string, headers: HeadersInit, ms: number) {
+  let last: Response | null = null;
+  for (let k = 0; k < HOSTS.length; k++) {
+    const i = (preferred + k) % HOSTS.length;
+    const r = await fetch(`${HOSTS[i]}${path}`, { headers, cache: "no-store", signal: AbortSignal.timeout(ms) }).catch(() => null);
+    if (r && ![401, 403, 404].includes(r.status)) {
+      preferred = i;
+      return r;
+    }
+    last = r ?? last;
+  }
+  return last ?? new Response(JSON.stringify({ description: "1inch unreachable" }), { status: 502 });
+}
 
 const spenderCache = new Map<number, { address: Address; at: number }>();
 
 async function getSpender(chainId: number, headers: HeadersInit): Promise<Address> {
   const hit = spenderCache.get(chainId);
   if (hit && Date.now() - hit.at < 3_600_000) return hit.address;
-  const r = await fetch(`${BASE}/${chainId}/approve/spender`, { headers, cache: "no-store", signal: AbortSignal.timeout(6000) });
+  const r = await oneInchFetch(`/${chainId}/approve/spender`, headers, 6000);
   const j = await r.json();
   const address = getAddress(j.address);
   spenderCache.set(chainId, { address, at: Date.now() });
@@ -34,7 +51,7 @@ export async function oneInchQuote(req: QuoteRequest): Promise<{ quote: Quote | 
     params.set("disableEstimate", "true");
   }
 
-  const res = await fetch(`${BASE}/${req.chainId}/${firm ? "swap" : "quote"}?${params}`, { headers, cache: "no-store", signal: AbortSignal.timeout(8000) });
+  const res = await oneInchFetch(`/${req.chainId}/${firm ? "swap" : "quote"}?${params}`, headers, 8000);
   const j = await res.json().catch(() => ({}));
   if (!res.ok) {
     const msg = j?.description || j?.error || `HTTP ${res.status}`;

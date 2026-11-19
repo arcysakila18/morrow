@@ -1,6 +1,5 @@
-import { isAddress } from "viem";
 import { serverEnv } from "@/config/server-env";
-import { networkFromRequest } from "@/lib/market/dexpaprika";
+import { isTokenAddress, networkFromRequest } from "@/lib/market/dexpaprika";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60; // the browser's EventSource reconnects automatically after this
@@ -11,12 +10,12 @@ export const maxDuration = 60; // the browser's EventSource reconnects automatic
  */
 export async function GET(req: Request) {
   const address = new URL(req.url).searchParams.get("address") ?? "";
-  if (!isAddress(address)) return new Response("Invalid address", { status: 400 });
   const network = networkFromRequest(req);
   if (!network) return new Response("Unsupported network", { status: 404 });
+  if (!isTokenAddress(network, address)) return new Response("Invalid address", { status: 400 });
 
   const upstream = await fetch(
-    `https://streaming.dexpaprika.com/sse/prices?chain=${network}&address=${address.toLowerCase()}&method=token_price`,
+    `https://streaming.dexpaprika.com/sse/prices?chain=${network}&address=${network === "solana" ? address : address.toLowerCase()}&method=token_price`,
     {
       headers: { accept: "text/event-stream", ...(serverEnv.dexPaprikaApiKey ? { Authorization: serverEnv.dexPaprikaApiKey } : {}) },
       signal: req.signal,

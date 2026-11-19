@@ -35,10 +35,20 @@ API keys are only read in `src/config/server-env.ts`, which is marked `server-on
 - Optional per-chain RPCs: `NEXT_PUBLIC_RPC_URL_<id>` / `NEXT_PUBLIC_WS_URL_<id>` (client) and `RPC_URL_<id>` (server).
 - To add a chain: add it to `SUPPORTED_CHAINS` and `CHAIN_META`, add contracts, core tokens and a public RPC, then add a transport in `src/lib/wagmi.ts`.
 
+## Solana
+- Select **Solana** in the network selector. Swaps go through Jupiter Ultra: Jupiter quotes and builds the transaction, the user's Privy Solana wallet (Phantom, Solflare, Backpack or embedded) signs it, and Jupiter lands it.
+- Token list and logos come from Jupiter's verified tokens. Balances come from the Solana RPC (`SOLANA_RPC_URL`; the public RPC is rate-limited, so use Helius or Alchemy). Explore and Pools use DexPaprika's `solana` network.
+- Optional: `JUPITER_API_KEY` gives higher limits on api.jup.ag.
+
+## Bridge
+- Swap and bridge are one card. Pick tokens from any network: same network → MORROW router (EVM) or Jupiter (Solana); different networks → one cross-network swap via the LI.FI API (Relay, Across, Stargate, the canonical bridge, DEXs). `/bridge` opens the same card on a cross-network pair.
+- Flow: exact-amount approval, simulate, sign on the source chain, then track `/v1/status` until DONE or FAILED. Solana-source transfers are signed by the Privy Solana wallet and sent via `NEXT_PUBLIC_SOLANA_RPC_URL`.
+- Optional: `LIFI_API_KEY`.
+
 ## Wallets (Privy)
 Connecting goes through Privy (`PrivyProvider` → `QueryClientProvider` → `WagmiProvider` from `@privy-io/wagmi`). All app code keeps using normal wagmi hooks.
 - Login: an external wallet (MetaMask, Rabby, Coinbase Wallet, WalletConnect for mobile wallets including Robinhood Wallet) or email, which creates a self-custodial Privy embedded wallet.
-- In the Privy dashboard: add your domains (e.g. `*.vercel.app` and your custom domain) under **Allowed origins**, enable Email and External wallets, and set a WalletConnect project id if you want mobile wallets.
+- In the Privy dashboard: enable **Solana** (external Solana wallets plus embedded Solana wallets), add your domains (e.g. `*.vercel.app` and your custom domain) under **Allowed origins**, enable Email and External wallets, and set a WalletConnect project id if you want mobile wallets.
 
 ## Architecture
 

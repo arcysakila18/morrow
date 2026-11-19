@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { cn } from "@/lib/cn";
-import { CHAIN_META, getChain, isSupportedChain } from "@/config/chains";
+import { CHAIN_META, SOLANA_META, chainName, isSolana, isSupportedChain } from "@/config/chains";
 
 /**
  * Official network logo: DefiLlama's chain icon CDN, then the network's own site icon,
@@ -9,12 +9,12 @@ import { CHAIN_META, getChain, isSupportedChain } from "@/config/chains";
  */
 export function ChainLogo({ chainId, size = 20, className }: { chainId: number; size?: number; className?: string }) {
   const [attempt, setAttempt] = useState(0);
-  const meta = isSupportedChain(chainId) ? CHAIN_META[chainId] : undefined;
+  const meta = isSolana(chainId) ? { ...SOLANA_META, testnet: false } : isSupportedChain(chainId) ? CHAIN_META[chainId] : undefined;
   const sources = meta
     ? [`https://icons.llamao.fi/icons/chains/rsz_${meta.llamaIcon}.jpg`, `https://www.google.com/s2/favicons?domain=${meta.domain}&sz=128`]
     : [];
   const src = sources[attempt];
-  const name = getChain(chainId).name;
+  const name = chainName(chainId);
   return (
     <span className={cn("relative inline-flex shrink-0 overflow-hidden rounded-full bg-surface-2", meta?.testnet && "opacity-60 grayscale", className)} style={{ width: size, height: size }}>
       {src ? (

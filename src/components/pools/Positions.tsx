@@ -34,7 +34,7 @@ export function Positions() {
       <h2 className="text-[17px] font-semibold">Your positions</h2>
       <div className="card mt-4">
         {!mounted || !isConnected ? (
-          <EmptyState title="Connect a wallet to view positions" body="Your Uniswap v3 liquidity positions on this network will appear here." action={<Button variant="primary" onClick={openWalletModal}>Connect wallet</Button>} />
+          <EmptyState title="Connect a wallet to view positions" body="Your Uniswap v3 liquidity positions on this network will appear here." action={<Button variant="primary" onClick={() => openWalletModal()}>Connect wallet</Button>} />
         ) : wrongNetwork || !hasUni ? (
           <EmptyState title="Positions aren't available on this network" body="Switch to a supported network to view Uniswap v3 positions." />
         ) : q.isLoading ? (

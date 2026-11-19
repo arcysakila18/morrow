@@ -7,7 +7,7 @@ export const metadata = { title: "Docs" };
 export default function DocsPage() {
   const chains = SUPPORTED_CHAINS.filter((c) => CONTRACTS[c.id].uniswapV3);
   return (
-    <Prose title="How MORROW works" lead="A non-custodial interface for trading on Robinhood Chain, Ethereum, Base, Arbitrum and BNB Chain. Your wallet signs every transaction; MORROW never holds funds or keys.">
+    <Prose title="How Morrow works" lead="A non-custodial interface for trading on Robinhood Chain, Ethereum, Base, Arbitrum, BNB Chain and Solana, including swaps across networks. Your wallet signs every transaction; Morrow never holds funds or keys.">
       <section>
         <h2>Networks</h2>
         <ul>
@@ -17,17 +17,20 @@ export default function DocsPage() {
               {CHAIN_META[c.id].testnet ? ". No swap contracts are published for this network." : ""}
             </li>
           ))}
+          <li>Solana: swaps through Jupiter Ultra</li>
         </ul>
-        <p>Robinhood Chain is the default network and the only one with Stock Tokens. MORROW never switches your wallet&apos;s network without your click.</p>
+        <p>Robinhood Chain is the default network and the only one with Stock Tokens. Morrow never switches your wallet&apos;s network without your click.</p>
       </section>
       <section>
         <h2>Routing</h2>
-        <p>For every quote, MORROW asks each available liquidity source in parallel and shows the route with the highest output.</p>
+        <p>For every quote, Morrow asks each available liquidity source in parallel and shows the route with the highest output.</p>
         <ul>
           <li><strong>Uniswap v3</strong>: quoted directly on-chain through QuoterV2, across all fee tiers and two-hop routes through each network&apos;s main tokens. Executed through SwapRouter02 with a deadline and a minimum output.</li>
           <li><strong>0x Swap API</strong>: available on all five mainnets when the operator configures an API key. Includes RFQ liquidity for Stock Tokens on Robinhood Chain.</li>
           <li><strong>1inch Swap API</strong>: available on all five mainnets when the operator configures an API key.</li>
           <li><strong>Rialto</strong> (Robinhood Chain): a direct integration needs partner API access. Until then its liquidity is reachable through 1inch.</li>
+          <li><strong>Jupiter Ultra</strong> (Solana): Jupiter quotes and builds the transaction, your wallet signs it, Jupiter lands it.</li>
+          <li><strong>Cross-network</strong>: when the pay and receive tokens are on different networks, the swap is routed by LI.FI (bridges such as Relay, Across, Stargate and the canonical Arbitrum bridge, plus DEXs). You approve the exact amount, sign once on the source network, and Morrow tracks it until it lands.</li>
           <li><strong>Native ⇄ wrapped</strong>: ETH/WETH and BNB/WBNB are converted 1:1 through the canonical wrapper contracts.</li>
         </ul>
       </section>
@@ -35,7 +38,7 @@ export default function DocsPage() {
         <h2>Before you sign</h2>
         <ul>
           <li>Approvals are for the exact amount by default. Unlimited approvals are opt-in.</li>
-          <li>After approval, MORROW fetches a fresh quote and stops if it falls below your minimum.</li>
+          <li>After approval, Morrow fetches a fresh quote and stops if it falls below your minimum.</li>
           <li>Every transaction is simulated against the chain before your wallet is asked to sign.</li>
           <li>Success is only shown after an on-chain receipt confirms it.</li>
         </ul>
@@ -86,7 +89,7 @@ export default function DocsPage() {
       </section>
       <section>
         <h2>Security</h2>
-        <p>MORROW has not been audited. It uses third-party smart contracts (Uniswap, aggregator routers) that MORROW does not control. Only trade amounts you can afford to lose.</p>
+        <p>Morrow has not been audited. It uses third-party smart contracts (Uniswap, aggregator routers) that Morrow does not control. Only trade amounts you can afford to lose.</p>
       </section>
     </Prose>
   );

@@ -1,6 +1,5 @@
 "use client";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
 import { formatUnits } from "viem";
 import { useAccount, useGasPrice, usePublicClient, useSwitchChain } from "wagmi";
 import { Button } from "@/components/ui/Button";
@@ -9,20 +8,18 @@ import { Notice } from "@/components/ui/misc";
 import { LiveBadge } from "@/components/ui/Live";
 import { openWalletModal } from "@/components/wallet/WalletModal";
 import { CONTRACTS } from "@/config/contracts";
-import { getChain, isSupportedChain, type SupportedChainId } from "@/config/chains";
+import { getChain, type SupportedChainId } from "@/config/chains";
 import { formatAmount, formatUsd, safeParseUnits } from "@/lib/format";
 import { humanizeError } from "@/lib/errors";
-import { defaultQuoteSymbol, isNative, sameToken } from "@/lib/tokens/core";
+import { isNative } from "@/lib/tokens/core";
 import type { Token } from "@/lib/tokens/types";
 import type { Quote } from "@/lib/swap/types";
-import { useAppChain, viewChainStore } from "@/hooks/useAppChain";
-import { findToken, useTokenList } from "@/hooks/useTokenList";
+import { useTokenList } from "@/hooks/useTokenList";
 import { useBalances } from "@/hooks/useBalances";
 import { usePrices } from "@/hooks/usePrices";
 import { fetchQuotes, useQuote } from "@/hooks/useQuote";
 import { useSwapExecution } from "@/hooks/useSwapExecution";
 import { TokenField } from "./TokenField";
-import { TokenSelectModal } from "./TokenSelectModal";
 import { SettingsPopover, settingsStore } from "./SettingsPopover";
 import { QuoteDetails, makeSymbolOf } from "./QuoteDetails";
 import { ReviewModal } from "./ReviewModal";
@@ -30,41 +27,30 @@ import { ReviewModal } from "./ReviewModal";
 /** Native ETH gas reserve kept back when the user presses MAX on ETH. */
 const GAS_RESERVE = 200_000_000_000_000n; // 0.0002 ETH
 
-export function SwapCard() {
-  const { chainId, wrongNetwork } = useAppChain();
-  const viewChain = viewChainStore.use();
-  const { address, isConnected } = useAccount();
+export type PairProps = {
+  tokenIn?: Token;
+  tokenOut?: Token;
+  amount: string;
+  setAmount: (v: string) => void;
+  onPick: (side: "in" | "out") => void;
+  /** Swap sides; `nextAmount` is what the pay field should show afterwards. */
+  onFlip: (nextAmount: string) => void;
+};
+
+/** Same-network swap on an EVM chain (Morrow router: Uniswap v3, 0x, 1inch). */
+export function SwapCard({ chainId, tokenIn, tokenOut, amount, setAmount, onPick, onFlip }: PairProps & { chainId: SupportedChainId }) {
+  const { address, isConnected, chainId: walletChainId } = useAccount();
+  const wrongNetwork = isConnected && walletChainId !== chainId;
   const { switchChainAsync, isPending: switching } = useSwitchChain();
   const settings = settingsStore.use();
   const { tokens } = useTokenList(chainId);
-  const params = useSearchParams();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  const [tokenIn, setTokenIn] = useState<Token | undefined>();
-  const [tokenOut, setTokenOut] = useState<Token | undefined>();
-  const [amount, setAmount] = useState("");
-  const [picker, setPicker] = useState<"in" | "out" | null>(null);
   const [review, setReview] = useState(false);
   // Snapshot of what the user is reviewing; follows live quotes only until they confirm.
   const [reviewed, setReviewed] = useState<{ quote: Quote; tokenIn: Token; tokenOut: Token; usdIn?: number; usdOut?: number } | null>(null);
   const [switchErr, setSwitchErr] = useState<string | null>(null);
-
-  // Deep link ?chain=<id> selects the network to browse (wallet switching stays manual).
-  useEffect(() => {
-    const c = Number(params?.get("chain"));
-    if (isSupportedChain(c) && !isConnected) viewChainStore.set(c);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // Defaults & deep links (?in=&out=), reset when the chain changes.
-  useEffect(() => {
-    const inT = findToken(tokens, params?.get("in")) ?? tokens.find(isNative);
-    const outT = findToken(tokens, params?.get("out")) ?? tokens.find((t) => t.symbol === defaultQuoteSymbol(chainId));
-    setTokenIn((cur) => (cur && cur.chainId === chainId && tokens.some((t) => sameToken(t, cur)) ? cur : inT));
-    setTokenOut((cur) => (cur && cur.chainId === chainId && tokens.some((t) => sameToken(t, cur)) ? cur : sameToken(outT, inT) ? undefined : outT));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chainId, tokens.length]);
 
   const hasInfra = !!CONTRACTS[chainId as SupportedChainId]?.uniswapV3;
   const symbolOf = useMemo(() => makeSymbolOf(tokens), [tokens]);
@@ -99,21 +85,7 @@ export function SwapCard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [review, quote, exec.step.kind]);
 
-  const flip = () => {
-    setTokenIn(tokenOut);
-    setTokenOut(tokenIn);
-    setAmount(outAmount || amount);
-  };
-
-  const onSelect = (side: "in" | "out") => (t: Token) => {
-    if (side === "in") {
-      if (sameToken(t, tokenOut)) setTokenOut(tokenIn);
-      setTokenIn(t);
-    } else {
-      if (sameToken(t, tokenIn)) setTokenIn(tokenOut);
-      setTokenOut(t);
-    }
-  };
+  const flip = () => onFlip(outAmount || amount);
 
   const onMax = () => {
     if (!tokenIn || balIn === undefined) return;
@@ -153,16 +125,16 @@ export function SwapCard() {
 
   // ── Primary CTA state machine ─────────────────────────────
   let cta: { label: string; onClick?: () => void; disabled?: boolean; loading?: boolean; variant?: "primary" | "ink" | "danger" } = { label: "Swap" };
-  if (!mounted || !isConnected) cta = { label: "Connect wallet", onClick: openWalletModal, variant: "primary" };
+  if (!mounted || !isConnected) cta = { label: "Connect wallet", onClick: () => openWalletModal(), variant: "primary" };
   else if (wrongNetwork)
     cta = {
-      label: `Switch to ${getChain(viewChain).name}`,
+      label: `Switch to ${getChain(chainId).name}`,
       loading: switching,
       variant: "ink",
       onClick: async () => {
         setSwitchErr(null);
         try {
-          await switchChainAsync({ chainId: viewChain });
+          await switchChainAsync({ chainId });
         } catch (e) {
           setSwitchErr(humanizeError(e));
         }
@@ -207,7 +179,7 @@ export function SwapCard() {
             token={tokenIn}
             value={amount}
             onChange={setAmount}
-            onSelectToken={() => setPicker("in")}
+            onSelectToken={() => onPick("in")}
             balance={mounted && isConnected ? balIn : undefined}
             usdValue={usdIn}
             onMax={onMax}
@@ -226,7 +198,7 @@ export function SwapCard() {
             token={tokenOut}
             value={outAmount}
             readOnly
-            onSelectToken={() => setPicker("out")}
+            onSelectToken={() => onPick("out")}
             balance={mounted && isConnected ? balances.get(tokenOut) : undefined}
             usdValue={usdOut}
             loading={!!amountIn && quoteQ.isFetching && !quote}
@@ -286,8 +258,6 @@ export function SwapCard() {
         </Notice>
       )}
 
-      <TokenSelectModal open={picker === "in"} onClose={() => setPicker(null)} tokens={tokens} chainId={chainId} onSelect={onSelect("in")} selected={tokenIn} other={tokenOut} />
-      <TokenSelectModal open={picker === "out"} onClose={() => setPicker(null)} tokens={tokens} chainId={chainId} onSelect={onSelect("out")} selected={tokenOut} other={tokenIn} />
       {reviewed && (
         <ReviewModal
           open={review}

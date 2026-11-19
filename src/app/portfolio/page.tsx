@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { formatUnits, getAddress, isAddress } from "viem";
-import { useAccount, useBalance, usePublicClient } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/Button";
 import { TokenIcon } from "@/components/ui/TokenIcon";
@@ -11,48 +11,57 @@ import { Skeleton } from "@/components/ui/Spinner";
 import { IconExternal } from "@/components/ui/Icons";
 import { Avatar } from "@/components/wallet/ConnectButton";
 import { openWalletModal } from "@/components/wallet/WalletModal";
-import { BLOCKSCOUT_API, CHAIN_META, explorerUrl, getChain, type SupportedChainId } from "@/config/chains";
-import { CONTRACTS } from "@/config/contracts";
+import { BLOCKSCOUT_API, SOLANA_ID, explorerUrl, getChain, type SupportedChainId } from "@/config/chains";
 import { cn } from "@/lib/cn";
 import { formatTokenAmount, formatUsd, shortAddress, timeAgo } from "@/lib/format";
 import { txStore, updateTx } from "@/lib/tx/store";
 import { useAppChain } from "@/hooks/useAppChain";
+import { useTokenList } from "@/hooks/useTokenList";
+import { useBalances } from "@/hooks/useBalances";
+import { usePrices } from "@/hooks/usePrices";
+import { useSolanaWallet } from "@/hooks/useSolanaWallet";
+import { useSolanaPortfolio } from "@/hooks/useSolana";
+import type { Token } from "@/lib/tokens/types";
 
 type BsTokenBalance = { value: string; token: { address_hash?: string; address?: string; symbol: string; name: string; decimals: string | null; exchange_rate: string | null; icon_url: string | null; type: string } };
 type BsTx = { hash: string; timestamp: string; status: "ok" | "error" | null; result: string; method: string | null; from: { hash: string }; to: { hash: string } | null; value: string; fee?: { value: string } };
 
-const ALLOC_COLORS = ["#101114", "#D9F36A", "#8d8e92", "#c4e04a", "#3a3b40", "#d4d4cd"];
+const ALLOC_COLORS = ["#D9F36A", "#7cc4ff", "#b9a3ff", "#5fd6a8", "#ffb37a", "#6c6d73"];
 
 export default function PortfolioPage() {
   const { address, isConnected } = useAccount();
-  const { chainId } = useAppChain();
+  const { chainId, isSolana } = useAppChain();
+  const sol = useSolanaWallet();
   const [mounted, setMounted] = useState(false);
   useEffect(() => setMounted(true), []);
 
-  if (!mounted || !isConnected || !address)
+  if (mounted && isSolana && sol.address) return <SolanaPortfolio owner={sol.address} />;
+  if (!mounted || (isSolana ? !sol.address : !isConnected || !address))
     return (
       <div className="mx-auto max-w-[1200px] px-4 pt-14 sm:px-6">
         <h1 className="text-[32px] font-semibold tracking-[-0.025em]">Portfolio</h1>
         <div className="card mt-8">
-          <EmptyState title="Connect a wallet to see your portfolio" body="Balances, allocation and activity are read directly from the chain." action={<Button variant="primary" size="lg" onClick={openWalletModal}>Connect wallet</Button>} />
+          <EmptyState title="Connect a wallet to see your portfolio" body="Balances, allocation and activity are read directly from the chain." action={<Button variant="primary" size="lg" onClick={() => openWalletModal(isSolana ? "solana" : "any")}>{isSolana ? "Connect Solana wallet" : "Connect wallet"}</Button>} />
         </div>
       </div>
     );
-  return <PortfolioView address={address} chainId={chainId} />;
+  return <PortfolioView address={address!} chainId={chainId} />;
 }
 
 function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: SupportedChainId }) {
   const indexed = !!BLOCKSCOUT_API[chainId];
-  const hasPrices = !!CHAIN_META[chainId].network;
-  const wrapped = CONTRACTS[chainId].wrappedNative?.toLowerCase();
   const nativeSym = getChain(chainId).nativeCurrency;
-  const native = useBalance({ address, chainId, query: { refetchInterval: 15_000 } });
+  // 1) On-chain balances (native + every token Morrow lists on this chain): fast and always available.
+  const { tokens } = useTokenList(chainId);
+  const onchain = useBalances(tokens, chainId);
+  // 2) The explorer adds tokens Morrow doesn't list. Never blocks the page.
   const balances = useQuery({
     queryKey: ["bs-balances", chainId, address],
     enabled: indexed,
-    refetchInterval: 15_000,
+    refetchInterval: 30_000,
+    retry: 1,
     queryFn: async () => {
-      const r = await fetch(`/api/explorer/addresses/${address}/token-balances?chainId=${chainId}`);
+      const r = await fetch(`/api/explorer/addresses/${address}/token-balances?chainId=${chainId}`, { signal: AbortSignal.timeout(12_000) });
       if (!r.ok) throw new Error("Explorer balances unavailable");
       return (await r.json()) as BsTokenBalance[];
     },
@@ -60,42 +69,42 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
   const txs = useQuery({
     queryKey: ["bs-txs", chainId, address],
     enabled: indexed,
-    refetchInterval: 20_000,
+    refetchInterval: 30_000,
+    retry: 1,
     queryFn: async () => {
-      const r = await fetch(`/api/explorer/addresses/${address}/transactions?chainId=${chainId}`);
+      const r = await fetch(`/api/explorer/addresses/${address}/transactions?chainId=${chainId}`, { signal: AbortSignal.timeout(12_000) });
       if (!r.ok) throw new Error("Explorer history unavailable");
       return ((await r.json()).items ?? []) as BsTx[];
     },
   });
 
-  const erc20 = useMemo(
-    () =>
-      (balances.data ?? [])
-        .filter((b) => b.token?.type === "ERC-20" && b.token.decimals != null && BigInt(b.value || "0") > 0n)
-        .map((b) => {
-          const addr = b.token.address_hash ?? b.token.address ?? "";
-          return { address: isAddress(addr) ? getAddress(addr) : addr, symbol: b.token.symbol, name: b.token.name, decimals: Number(b.token.decimals), raw: BigInt(b.value), icon: b.token.icon_url ?? undefined };
-        }),
-    [balances.data],
+  type Holding = { address: string; symbol: string; name: string; decimals: number; raw: bigint; icon?: string; token?: Token };
+  const holdings = useMemo(() => {
+    const out = new Map<string, Holding>();
+    for (const t of tokens) {
+      const raw = onchain.get(t);
+      if (raw && raw > 0n) out.set(t.address.toLowerCase(), { address: t.address, symbol: t.symbol, name: t.name, decimals: t.decimals, raw, icon: t.logoURI, token: t });
+    }
+    for (const b of balances.data ?? []) {
+      const addr = (b.token?.address_hash ?? b.token?.address ?? "").toLowerCase();
+      if (b.token?.type !== "ERC-20" || b.token.decimals == null || !isAddress(addr) || out.has(addr)) continue;
+      const raw = BigInt(b.value || "0");
+      if (raw > 0n) out.set(addr, { address: getAddress(addr), symbol: b.token.symbol, name: b.token.name, decimals: Number(b.token.decimals), raw, icon: b.token.icon_url ?? undefined });
+    }
+    return [...out.values()];
+  }, [tokens, onchain, balances.data]);
+
+  const price = usePrices(
+    holdings.map((h) => h.token ?? ({ chainId, address: h.address, symbol: h.symbol, name: h.name, decimals: h.decimals, source: "custom" } as Token)),
+    chainId,
   );
-
-  const priceQ = useQuery({
-    queryKey: ["pf-prices", chainId, erc20.map((t) => t.address).join(",")],
-    enabled: hasPrices,
-    refetchInterval: 60_000,
-    queryFn: async () => {
-      const list = [...(wrapped ? [wrapped] : []), ...erc20.map((t) => t.address)].map((a) => a.toLowerCase());
-      const r = await fetch(`/api/market/prices?tokens=${Array.from(new Set(list)).join(",")}&chainId=${chainId}`);
-      return ((await r.json()).prices ?? {}) as Record<string, number>;
-    },
-  });
-  const prices = priceQ.data ?? {};
-
-  const rows = [
-    ...(native.data ? [{ address: "native", symbol: nativeSym.symbol, name: nativeSym.name, decimals: nativeSym.decimals, raw: native.data.value, icon: undefined as string | undefined, price: wrapped ? prices[wrapped] : undefined }] : []),
-    ...erc20.map((t) => ({ ...t, price: prices[t.address.toLowerCase()] })),
-  ].map((r) => ({ ...r, usd: r.price != null ? Number(formatUnits(r.raw, r.decimals)) * r.price : undefined }));
-  rows.sort((x, y) => (y.usd ?? -1) - (x.usd ?? -1));
+  const rows = holdings
+    .map((h) => {
+      const p = price(h.token ?? ({ chainId, address: h.address } as Token));
+      return { ...h, price: p, usd: p != null ? Number(formatUnits(h.raw, h.decimals)) * p : undefined };
+    })
+    .sort((x, y) => (y.usd ?? -1) - (x.usd ?? -1));
+  const loadingBalances = onchain.isLoading && !holdings.length;
   const priced = rows.filter((r) => r.usd != null);
   const total = priced.reduce((s, r) => s + (r.usd ?? 0), 0);
   const unpriced = rows.length - priced.length;
@@ -112,13 +121,13 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
         </div>
       </div>
 
-      {!indexed && <Notice className="mt-6">Token indexing isn&apos;t available for {getChain(chainId).name}. Showing your native balance only.</Notice>}
+      {!indexed && <Notice className="mt-6">Explorer history isn&apos;t available for {getChain(chainId).name}. Balances of listed tokens are read from the chain.</Notice>}
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
         <div className="card p-6">
           <div className="text-[13px] text-muted">Total value</div>
           <div className="tabular mt-1 text-[44px] font-semibold leading-none tracking-[-0.03em]">
-            {balances.isLoading || priceQ.isLoading ? <Skeleton className="h-11 w-48" /> : priced.length ? formatUsd(total) : "—"}
+            {loadingBalances ? <Skeleton className="h-11 w-48" /> : priced.length ? formatUsd(total) : holdings.length ? "—" : formatUsd(0)}
           </div>
           {unpriced > 0 && <p className="mt-2 text-xs text-faint">Excludes {unpriced} token{unpriced > 1 ? "s" : ""} without a market price.</p>}
           {total > 0 && (
@@ -144,12 +153,10 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
 
       <h2 className="mt-10 text-[17px] font-semibold">Tokens</h2>
       <div className="card mt-4 overflow-hidden">
-        {balances.isLoading && indexed ? (
+        {loadingBalances ? (
           <div className="space-y-3 p-5">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
-        ) : !rows.length && balances.isError ? (
-          <EmptyState title="Balances unavailable" body="The explorer couldn't be reached. Try again shortly." />
         ) : !rows.length ? (
-          <EmptyState title="No tokens yet" body={`Bridge ${nativeSym.symbol} to ${getChain(chainId).name} to get started.`} action={<Link href="/"><Button variant="outline">Go to swap</Button></Link>} />
+          <EmptyState title="No tokens yet" body={`Bridge ${nativeSym.symbol} to ${getChain(chainId).name} to get started.`} action={<Link href="/bridge"><Button variant="outline">Open bridge</Button></Link>} />
         ) : (
           <table className="w-full text-sm">
             <thead className="border-b border-line text-xs text-muted">
@@ -165,7 +172,7 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
                 <tr key={r.address} className="border-b border-line/70 last:border-0">
                   <td className="py-3 pl-5">
                     <div className="flex items-center gap-3">
-                      <TokenIcon symbol={r.symbol} src={r.icon} address={r.address === "native" ? "0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE" : r.address} chainId={chainId} size={32} />
+                      <TokenIcon symbol={r.symbol} src={r.icon} address={r.address} chainId={chainId} size={32} />
                       <div className="min-w-0">
                         <div className="font-medium">{r.symbol}</div>
                         <div className="max-w-[160px] truncate text-xs text-muted">{r.name}</div>
@@ -181,7 +188,7 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
           </table>
         )}
       </div>
-      {balances.isError && rows.length > 0 && <Notice tone="warn" className="mt-3">Token balances couldn&apos;t be loaded from the explorer. Your native ETH balance is read directly from the chain.</Notice>}
+      {balances.isError && <Notice className="mt-3">Balances of listed tokens are read directly from the chain. Unlisted tokens from the explorer are temporarily unavailable.</Notice>}
     </div>
   );
 }
@@ -250,6 +257,75 @@ function Activity({ txs, loading, error, address, chainId }: { txs?: BsTx[]; loa
           </ul>
         )}
       </div>
+    </div>
+  );
+}
+
+function SolanaPortfolio({ owner }: { owner: string }) {
+  const q = useSolanaPortfolio(owner);
+  const rows = (q.data ?? [])
+    .map((h) => ({ ...h, rawBig: BigInt(h.raw), usd: h.usdPrice != null ? Number(formatUnits(BigInt(h.raw), h.decimals)) * h.usdPrice : undefined }))
+    .filter((h) => h.rawBig > 0n)
+    .sort((a, b) => (b.usd ?? -1) - (a.usd ?? -1));
+  const priced = rows.filter((r) => r.usd != null);
+  const total = priced.reduce((s, r) => s + (r.usd ?? 0), 0);
+
+  return (
+    <div className="mx-auto max-w-[1200px] px-4 pt-10 sm:px-6 sm:pt-14">
+      <div className="flex items-center gap-4">
+        <Avatar address={owner} size={52} />
+        <div>
+          <div className="flex items-center gap-1 font-mono text-[15px]">{shortAddress(owner, 6)} <CopyButton value={owner} /></div>
+          <a href={explorerUrl(SOLANA_ID, "address", owner)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-[13px] text-muted hover:text-ink">
+            View on Solscan <IconExternal width={12} height={12} />
+          </a>
+        </div>
+      </div>
+      <div className="card mt-8 p-6">
+        <div className="text-[13px] text-muted">Total value · Solana</div>
+        <div className="tabular mt-1 text-[44px] font-semibold leading-none tracking-[-0.03em]">{q.isLoading ? <Skeleton className="h-11 w-48" /> : formatUsd(total)}</div>
+        {rows.length > priced.length && <p className="mt-2 text-xs text-faint">Excludes {rows.length - priced.length} token{rows.length - priced.length > 1 ? "s" : ""} without a market price.</p>}
+      </div>
+      <h2 className="mt-10 text-[17px] font-semibold">Tokens</h2>
+      <div className="card mt-4 overflow-hidden">
+        {q.isLoading ? (
+          <div className="space-y-3 p-5">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-10 w-full" />)}</div>
+        ) : q.isError ? (
+          <EmptyState title="Balances unavailable" body="The Solana RPC couldn't be reached. Try again shortly." />
+        ) : !rows.length ? (
+          <EmptyState title="No tokens yet" body="Bridge assets to Solana to get started." action={<Link href="/bridge"><Button variant="outline">Open bridge</Button></Link>} />
+        ) : (
+          <table className="w-full text-sm">
+            <thead className="border-b border-line text-xs text-muted">
+              <tr>
+                <th className="py-3.5 pl-5 text-left font-medium">Token</th>
+                <th className="hidden py-3.5 pr-4 text-right font-medium sm:table-cell">Price</th>
+                <th className="py-3.5 pr-4 text-right font-medium">Balance</th>
+                <th className="py-3.5 pr-5 text-right font-medium">Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.mint} className="border-b border-line/70 last:border-0">
+                  <td className="py-3 pl-5">
+                    <div className="flex items-center gap-3">
+                      <TokenIcon symbol={r.symbol} src={r.logoURI} address={r.mint} chainId={SOLANA_ID} size={32} />
+                      <div className="min-w-0">
+                        <div className="font-medium">{r.symbol}</div>
+                        <div className="max-w-[160px] truncate text-xs text-muted">{r.name}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="tabular hidden py-3 pr-4 text-right text-muted sm:table-cell">{formatUsd(r.usdPrice)}</td>
+                  <td className="tabular py-3 pr-4 text-right">{formatTokenAmount(r.rawBig, r.decimals)}</td>
+                  <td className="tabular py-3 pr-5 text-right font-medium">{formatUsd(r.usd)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
+      <p className="mt-3 text-[11px] text-faint">Balances from the Solana RPC. Prices and logos from Jupiter.</p>
     </div>
   );
 }

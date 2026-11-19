@@ -1,7 +1,8 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getTokenRankings, networkFromRequest } from "@/lib/market/dexpaprika";
 
-export const revalidate = 30;
+
 
 export async function GET(req: Request) {
   const network = networkFromRequest(req);

@@ -11,8 +11,8 @@ import type { MarketToken } from "@/lib/market/dexpaprika";
 
 /** Live "most traded" strip under the swap card. Hidden entirely if data is unavailable. */
 export function TopMovers() {
-  const { chainId } = useAppChain();
-  const q = useApi<{ tokens: MarketToken[] }>(`/api/market/tokens?order=volume&chainId=${chainId}`, { refetchInterval: 30_000 });
+  const { marketChainId } = useAppChain();
+  const q = useApi<{ tokens: MarketToken[] }>(`/api/market/tokens?order=volume&chainId=${marketChainId}`, { refetchInterval: 30_000 });
   if (q.isError || (q.data && !q.data.tokens.length)) return null;
   const list = q.data?.tokens.slice(0, 4);
   return (

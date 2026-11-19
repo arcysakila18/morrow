@@ -2,7 +2,7 @@
 import { formatUnits } from "viem";
 import { cn } from "@/lib/cn";
 import { formatTokenAmount, formatUsd } from "@/lib/format";
-import { TokenIcon } from "@/components/ui/TokenIcon";
+import { ChainTokenIcon } from "@/components/ui/ChainTokenIcon";
 import { IconChevronDown } from "@/components/ui/Icons";
 import { Skeleton } from "@/components/ui/Spinner";
 import type { Token } from "@/lib/tokens/types";
@@ -63,12 +63,12 @@ export function TokenField({
           onClick={onSelectToken}
           className={cn(
             "flex h-11 shrink-0 items-center gap-2 rounded-full pl-1.5 pr-3 text-[15px] font-semibold transition",
-            token ? "border border-line bg-surface hover:border-line-strong" : "bg-ink pl-4 text-paper hover:bg-ink-2",
+            token ? "border border-line bg-surface hover:border-line-strong" : "bg-lime pl-4 text-on-lime hover:bg-lime-deep",
           )}
         >
-          {token && <TokenIcon symbol={token.symbol} address={token.address} src={token.logoURI} stock={token.source === "stock"} size={30} />}
+          {token && <ChainTokenIcon token={token} size={30} />}
           {token ? token.symbol : "Select token"}
-          <IconChevronDown width={16} height={16} className={token ? "text-faint" : "text-paper/70"} />
+          <IconChevronDown width={16} height={16} className={token ? "text-faint" : "text-on-lime/70"} />
         </button>
       </div>
       <div className="mt-2.5 flex h-5 items-center justify-between text-[13px] text-muted">
@@ -77,7 +77,7 @@ export function TokenField({
           <span className="flex items-center gap-1.5">
             <span className="tabular">Balance {formatTokenAmount(balance, token.decimals)}</span>
             {onMax && balance > 0n && value !== formatUnits(balance, token.decimals) && (
-              <button onClick={onMax} className="rounded-md bg-surface-3 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink hover:bg-lime">
+              <button onClick={onMax} className="rounded-md bg-surface-3 px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-ink hover:bg-lime hover:text-on-lime">
                 Max
               </button>
             )}

@@ -36,7 +36,7 @@ export function CopyButton({ value, className }: { value: string; className?: st
 
 export function AddressLink({ address, chainId: chainIdProp, kind = "address", chars = 4, className }: { address: string; chainId?: number; kind?: "address" | "token" | "tx"; chars?: number; className?: string }) {
   const app = useAppChain();
-  const chainId = chainIdProp ?? app.chainId;
+  const chainId = chainIdProp ?? app.marketChainId;
   return (
     <span className={cn("inline-flex items-center gap-1 font-mono text-[13px] text-muted", className)}>
       <a href={explorerUrl(chainId, kind, address)} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 hover:text-ink">
@@ -64,7 +64,7 @@ export function Change({ value, className }: { value: number | null | undefined;
 export function Notice({ tone = "neutral", children, className }: { tone?: "neutral" | "warn" | "error" | "ok"; children: ReactNode; className?: string }) {
   const tones = {
     neutral: "bg-surface-2 text-muted",
-    warn: "bg-warn/10 text-[#8a5a12]",
+    warn: "bg-warn/10 text-warn",
     error: "bg-down/10 text-down",
     ok: "bg-up/10 text-up",
   };
@@ -80,7 +80,7 @@ export function Segmented<T extends string>({ options, value, onChange, classNam
           onClick={() => onChange(o.value)}
           className={cn(
             "h-8 rounded-[10px] px-3.5 text-[13px] font-medium transition",
-            value === o.value ? "bg-surface text-ink shadow-[0_1px_2px_rgba(16,17,20,0.08)]" : "text-muted hover:text-ink",
+            value === o.value ? "bg-surface text-ink shadow-[0_1px_2px_rgba(0,0,0,0.4)]" : "text-muted hover:text-ink",
           )}
         >
           {o.label}

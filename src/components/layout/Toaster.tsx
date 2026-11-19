@@ -68,7 +68,7 @@ export function Toaster() {
           <span
             className={cn(
               "flex h-9 w-9 shrink-0 items-center justify-center rounded-full",
-              tx.status === "success" ? "bg-lime text-ink" : tx.status === "failed" ? "bg-down/10 text-down" : "bg-surface-2 text-ink",
+              tx.status === "success" ? "bg-lime text-on-lime" : tx.status === "failed" ? "bg-down/10 text-down" : "bg-surface-2 text-ink",
             )}
           >
             {tx.status === "pending" ? <Spinner className="h-4 w-4" /> : tx.status === "success" ? <IconCheck width={18} height={18} /> : <IconClose width={16} height={16} />}

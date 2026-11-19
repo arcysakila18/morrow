@@ -1,13 +1,15 @@
 export const SITE = {
-  name: "MORROW",
+  name: "Morrow",
   tagline: "Trade at your own pace.",
-  description: "An independent, non-custodial exchange interface for Robinhood Chain.",
+  url: "https://morrowswap.trade",
+  description: "Swap stock tokens and crypto across Robinhood Chain, Ethereum, Base, Arbitrum, BNB Chain and Solana. Non-custodial, no added fee.",
   links: {
-    x: "https://x.com/",
-    discord: "https://discord.com/",
+    x: "https://x.com/morrowswap",
+    /** Empty until a server exists; empty links are hidden. */
+    discord: "" as string,
     explorer: "https://robinhoodchain.blockscout.com",
     chainDocs: "https://docs.robinhood.com/chain/",
   },
   disclaimer:
-    "MORROW is an independent third-party interface. It is not affiliated with, sponsored by, or endorsed by Robinhood Markets, Inc. or any of its affiliates. MORROW has not been audited.",
+    "Morrow is an independent third-party interface. It is not affiliated with, sponsored by, or endorsed by Robinhood Markets, Inc. or any of its affiliates. Morrow has not been audited.",
 } as const;

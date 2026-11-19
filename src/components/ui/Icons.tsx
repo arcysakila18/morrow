@@ -37,3 +37,7 @@ export const IconCompass = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><c
 export const IconDrop = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M12 3.5s-6 6.2-6 10.5a6 6 0 0 0 12 0c0-4.3-6-10.5-6-10.5Z" /><path d="M9.5 14.5a2.5 2.5 0 0 0 2.5 2.5" /></svg>);
 export const IconPie = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M12 3v9h9" /><path d="M20.5 15A9 9 0 1 1 9 3.5" /></svg>);
 export const IconBook = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M5 4.5A1.5 1.5 0 0 1 6.5 3H19v15H6.5A1.5 1.5 0 0 0 5 19.5Z" /><path d="M5 19.5A1.5 1.5 0 0 0 6.5 21H19M9 7h6" /></svg>);
+export const IconBridge = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M3 17h18M5 17v-3a7 7 0 0 1 14 0v3M9 17v-2.5M15 17v-2.5M12 17v-3" /></svg>);
+export const IconShuffle = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="M16 3h5v5M4 20 21 3M21 16v5h-5M15 15l6 6M4 4l5 5" /></svg>);
+export const IconTrend = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="m3 17 6-6 4 4 8-8M15 7h6v6" /></svg>);
+export const IconStar = (p: SVGProps<SVGSVGElement>) => (<svg {...base(p)}><path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9z" /></svg>);

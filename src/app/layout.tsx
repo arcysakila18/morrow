@@ -10,12 +10,15 @@ import { SITE } from "@/config/site";
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
 export const metadata: Metadata = {
-  title: { default: `${SITE.name} — ${SITE.tagline}`, template: `%s · ${SITE.name}` },
+  metadataBase: new URL(SITE.url),
+  title: { default: `Morrow — ${SITE.tagline}`, template: `%s · Morrow` },
   description: SITE.description,
+  openGraph: { type: "website", siteName: "Morrow", url: SITE.url, title: `Morrow — ${SITE.tagline}`, description: SITE.description },
+  twitter: { card: "summary_large_image", site: "@morrowswap", creator: "@morrowswap", title: `Morrow — ${SITE.tagline}`, description: SITE.description },
   icons: { icon: "/icon.png", apple: "/apple-icon.png" },
 };
 
-export const viewport: Viewport = { themeColor: "#F8F8F5", width: "device-width", initialScale: 1 };
+export const viewport: Viewport = { themeColor: "#0d0e10", width: "device-width", initialScale: 1 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (

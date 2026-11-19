@@ -51,7 +51,32 @@ export const CHAIN_META: Record<
   46630: { short: "Testnet", nativeCoingecko: "ethereum", llamaIcon: "robinhood", domain: "robinhood.com", testnet: true },
 };
 
+/**
+ * Solana (non-EVM). Not part of wagmi; it has its own wallet (Privy Solana), swap (Jupiter)
+ * and data paths. 101 is Solana mainnet's conventional cluster id, used only as an app key.
+ */
+export const SOLANA_ID = 101 as const;
+export type AppChainId = SupportedChainId | typeof SOLANA_ID;
+export const SOLANA_META = {
+  name: "Solana",
+  short: "Solana",
+  network: "solana",
+  dexscreener: "solana",
+  nativeCoingecko: "solana",
+  llamaIcon: "solana",
+  domain: "solana.com",
+  explorer: "https://solscan.io",
+} as const;
+
+export const isSolana = (id: number | undefined): id is typeof SOLANA_ID => id === SOLANA_ID;
+
+/** Display name for any app chain, EVM or Solana. */
+export function chainName(id: number) {
+  return isSolana(id) ? SOLANA_META.name : getChain(id).name;
+}
+
 export function explorerUrl(chainId: number, kind: "tx" | "address" | "token", value: string) {
+  if (isSolana(chainId)) return `${SOLANA_META.explorer}/${kind === "address" ? "account" : kind}/${value}`;
   const chain = getChain(chainId);
   // Etherscan-family explorers use /token/, Blockscout supports both.
   return `${chain.blockExplorers.default.url}/${kind}/${value}`;

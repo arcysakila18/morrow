@@ -20,7 +20,7 @@ type Data = { token: MarketToken; pools: MarketPool[]; chart: { t: number; c: nu
 
 export default function TokenPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = use(params);
-  const { chainId } = useAppChain();
+  const { marketChainId: chainId } = useAppChain();
   const q = useApi<Data>(`/api/market/token/${address}?chainId=${chainId}`, { refetchInterval: 20_000 });
   const live = useLivePrice(address, chainId);
   const { isVerified, isLoading: vLoading } = useVerifiedSet();

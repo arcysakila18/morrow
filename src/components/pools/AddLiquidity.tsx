@@ -169,7 +169,7 @@ export function AddLiquidity({ pool, chainId }: { pool: PoolState; chainId: Supp
       {runner.state.phase === "done" && <Notice tone="ok" className="mt-3">Position created. It now appears under Your positions.</Notice>}
 
       {!isConnected ? (
-        <Button variant="primary" size="lg" block className="mt-4" onClick={openWalletModal}>Connect wallet</Button>
+        <Button variant="primary" size="lg" block className="mt-4" onClick={() => openWalletModal()}>Connect wallet</Button>
       ) : wrongNetwork ? (
         <Button variant="soft" size="lg" block className="mt-4" disabled>Switch network in your wallet</Button>
       ) : (

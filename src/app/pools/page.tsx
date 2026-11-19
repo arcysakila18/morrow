@@ -6,18 +6,18 @@ import { PoolTable } from "@/components/pools/PoolTable";
 import { Positions } from "@/components/pools/Positions";
 import type { MarketPool } from "@/lib/market/dexpaprika";
 import { useAppChain } from "@/hooks/useAppChain";
-import { getChain } from "@/config/chains";
+import { chainName } from "@/config/chains";
 
 export default function PoolsPage() {
-  const { chainId } = useAppChain();
+  const { marketChainId: chainId, isSolana } = useAppChain();
   const [order, setOrder] = useState<"volume" | "tvl" | "new">("volume");
   const q = useApi<{ pools: MarketPool[] }>(`/api/market/pools?order=${order}&chainId=${chainId}`, { refetchInterval: 30_000 });
   return (
     <div className="mx-auto max-w-[1200px] px-4 pt-10 sm:px-6 sm:pt-14">
       <h1 className="text-[32px] font-semibold tracking-[-0.025em]">Pools</h1>
-      <p className="mt-1.5 text-[15px] text-muted">Provide liquidity and earn trading fees on {getChain(chainId).name}.</p>
+      <p className="mt-1.5 text-[15px] text-muted">{isSolana ? "Liquidity pools on Solana, by on-chain activity." : <>Provide liquidity and earn trading fees on {chainName(chainId)}.</>}</p>
 
-      <Positions />
+      {!isSolana && <Positions />}
 
       <div className="mt-12 flex items-center justify-between">
         <h2 className="text-[17px] font-semibold">All pools</h2>

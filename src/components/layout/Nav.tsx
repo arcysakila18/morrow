@@ -16,7 +16,7 @@ export const NAV = [
 ];
 
 function isActive(path: string, href: string) {
-  return href === "/" ? path === "/" : path.startsWith(href);
+  return href === "/" ? path === "/" || path.startsWith("/bridge") : path.startsWith(href);
 }
 
 export function Nav() {
@@ -25,7 +25,7 @@ export function Nav() {
     <>
       <header className="sticky top-0 z-30 border-b border-line/60 bg-paper/70 backdrop-blur-xl">
         <div className="mx-auto flex h-16 max-w-[1200px] items-center gap-6 px-4 sm:px-6">
-          <Link href="/" className="shrink-0" aria-label="MORROW home">
+          <Link href="/" className="shrink-0" aria-label="Morrow home">
             <span className="hidden sm:block"><Logo /></span>
             <span className="block sm:hidden"><LogoMark /></span>
           </Link>
@@ -61,7 +61,7 @@ export function Nav() {
                 aria-current={active ? "page" : undefined}
                 className={cn("flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors", active ? "text-ink" : "text-faint")}
               >
-                <span className={cn("flex h-8 w-12 items-center justify-center rounded-full transition-colors", active ? "bg-lime" : "bg-transparent")}>
+                <span className={cn("flex h-8 w-12 items-center justify-center rounded-full transition-colors", active ? "bg-lime text-on-lime" : "bg-transparent")}>
                   <Icon width={20} height={20} strokeWidth={active ? 2.1 : 1.8} />
                 </span>
                 {label}

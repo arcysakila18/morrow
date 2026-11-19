@@ -38,7 +38,7 @@ function StepRow({ n, label, sub, state }: { n: number; label: string; sub?: str
       <span
         className={cn(
           "flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-[13px] font-semibold",
-          state === "done" ? "bg-ink text-lime" : state === "active" ? "bg-lime text-ink" : state === "error" ? "bg-down/10 text-down" : "bg-surface-2 text-faint",
+          state === "done" ? "bg-lime/15 text-lime" : state === "active" ? "bg-lime text-on-lime" : state === "error" ? "bg-down/10 text-down" : "bg-surface-2 text-faint",
         )}
       >
         {state === "done" ? <IconCheck width={16} height={16} /> : state === "active" ? <Spinner className="h-4 w-4" /> : state === "error" ? "!" : n}
@@ -102,7 +102,7 @@ export function ReviewModal({
     <Modal open={open} onClose={close} title={step.kind === "success" ? "" : step.kind === "idle" ? `Review ${verb.toLowerCase()}` : `${verb} in progress`}>
       {step.kind === "success" ? (
         <div className="flex flex-col items-center px-6 pb-6 pt-2 text-center">
-          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-lime">
+          <span className="flex h-14 w-14 items-center justify-center rounded-full bg-lime text-on-lime">
             <IconCheck width={26} height={26} />
           </span>
           <h3 className="mt-4 text-lg font-semibold">{verb} confirmed</h3>

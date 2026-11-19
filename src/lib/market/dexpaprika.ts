@@ -5,12 +5,22 @@ import { serverEnv } from "@/config/server-env";
  * DexPaprika — indexed DEX data for Robinhood Chain (network id "robinhood").
  * Docs: https://docs.dexpaprika.com. All values come from on-chain swaps it indexes.
  */
-import { CHAIN_META, isSupportedChain } from "@/config/chains";
+import { CHAIN_META, SOLANA_META, isSolana, isSupportedChain } from "@/config/chains";
+import { isAddress } from "viem";
 
 /** DexPaprika network id for a chain, or null when the chain isn't indexed. */
 export function networkFor(chainId: number): string | null {
+  if (isSolana(chainId)) return SOLANA_META.network;
   return isSupportedChain(chainId) ? CHAIN_META[chainId].network ?? null : null;
 }
+
+const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
+/** EVM address on EVM networks, base58 mint/account on Solana. */
+export function isTokenAddress(network: string, a: string) {
+  return network === "solana" ? BASE58.test(a) : isAddress(a);
+}
+/** Solana addresses are case-sensitive; EVM ones are normalised to lowercase. */
+export const normAddr = (network: string, a: string) => (network === "solana" ? a : a.toLowerCase());
 
 /** Reads ?chainId= from a request and resolves the DexPaprika network (default Robinhood Chain). */
 export function networkFromRequest(req: Request): string | null {
@@ -42,6 +52,7 @@ export type MarketPool = {
 
 export type MarketToken = {
   address: string;
+  chain: string | null;
   symbol: string;
   name: string;
   decimals: number | null;
@@ -107,6 +118,7 @@ export async function getToken(NETWORK: string, address: string): Promise<Market
   const d = s["24h"] ?? {};
   return {
     address: String(j.id ?? address),
+    chain: j.chain ? String(j.chain) : null,
     symbol: String(j.symbol ?? "?"),
     name: String(j.name ?? ""),
     decimals: num(j.decimals),
@@ -128,7 +140,7 @@ export async function getPrices(NETWORK: string, addresses: string[]) {
     for (const r of rows as Record<string, any>[]) {
       const p = num(r.price_usd);
       const id = r.id ?? r.address ?? r.token;
-      if (id && p != null) out[String(id).toLowerCase()] = p;
+      if (id && p != null) out[normAddr(NETWORK, String(id))] = p;
     }
   }
   return out;
@@ -146,26 +158,29 @@ export async function getOhlcv(NETWORK: string, pool: string, days = 7) {
 /** Tokens ranked by 24h pool volume, with per-token market details. */
 export async function getTokenRankings(NETWORK: string, orderBy: "volume_usd_24h" | "created_at", limit = 24) {
   const { pools } = await getPools(NETWORK, { orderBy, limit: 60 });
-  const QUOTES = new Set(["weth", "eth", "usdg", "usdc", "usdt", "usde", "wbnb", "bnb", "dai", "usdc.e"]);
+  const QUOTES = new Set(["weth", "eth", "usdg", "usdc", "usdt", "usde", "wbnb", "bnb", "dai", "usdc.e", "sol", "wsol"]);
   const seen = new Set<string>();
   const picks: string[] = [];
   for (const p of pools) {
     for (const t of p.tokens) {
-      const a = t.address.toLowerCase();
+      const a = normAddr(NETWORK, t.address);
       if (seen.has(a) || (orderBy === "created_at" && QUOTES.has(t.symbol.toLowerCase()))) continue;
       seen.add(a);
       picks.push(a);
     }
     if (picks.length >= limit) break;
   }
-  const tokens = await Promise.all(picks.slice(0, limit).map((a) => getToken(NETWORK, a).catch(() => null)));
-  return tokens.filter((t): t is MarketToken => !!t);
+  const tokens = (await Promise.all(picks.slice(0, limit).map((a) => getToken(NETWORK, a).catch(() => null)))).filter(
+    (t): t is MarketToken => !!t && (!t.chain || t.chain === NETWORK),
+  );
+  return dedupeBySymbol(tokens);
 }
 
 export async function searchTokens(NETWORK: string, query: string) {
   const j = await get<Record<string, any>>(`/search?query=${encodeURIComponent(query)}`, 60);
   const tokens: Record<string, any>[] = (j.tokens ?? []).filter((t: Record<string, any>) => t.chain === NETWORK);
   return tokens.slice(0, 20).map((t) => ({
+    chain: NETWORK,
     address: String(t.id),
     symbol: String(t.symbol ?? "?"),
     name: String(t.name ?? ""),
@@ -173,4 +188,19 @@ export async function searchTokens(NETWORK: string, query: string) {
     liquidityUsd: num(t.liquidity_usd),
     volume24hUsd: num(t.volume_usd),
   }));
+}
+
+/**
+ * Many copycat tokens reuse a popular symbol. Keep one row per symbol: the one with the
+ * deepest liquidity (then volume). Different contracts stay reachable by address search.
+ */
+export function dedupeBySymbol<T extends { symbol: string; liquidityUsd: number | null; volume24hUsd: number | null }>(tokens: T[]): T[] {
+  const best = new Map<string, T>();
+  for (const t of tokens) {
+    const k = t.symbol.trim().toUpperCase();
+    const cur = best.get(k);
+    const score = (x: T) => (x.liquidityUsd ?? 0) * 1e3 + (x.volume24hUsd ?? 0);
+    if (!cur || score(t) > score(cur)) best.set(k, t);
+  }
+  return tokens.filter((t) => best.get(t.symbol.trim().toUpperCase()) === t);
 }

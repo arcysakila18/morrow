@@ -15,9 +15,9 @@ import { useAppChain } from "@/hooks/useAppChain";
 
 export default function PoolPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = use(params);
-  const { chainId } = useAppChain();
+  const { chainId: evmChainId, marketChainId: chainId, isSolana } = useAppChain();
   const market = useApi<{ pool: MarketPool; chart: { t: number; c: number }[] }>(`/api/market/pool/${address}?chainId=${chainId}`, { refetchInterval: 60_000 });
-  const chain = useUniswapV3Pool(address, chainId);
+  const chain = useUniswapV3Pool(isSolana ? undefined : address, evmChainId);
   const p = market.data?.pool;
   const s = chain.data;
   const a = s?.token0.symbol ?? p?.tokens[0]?.symbol ?? "—";
@@ -73,10 +73,10 @@ export default function PoolPage({ params }: { params: Promise<{ address: string
           {chain.isLoading ? (
             <div className="card p-5"><Skeleton className="h-64 w-full" /></div>
           ) : s ? (
-            <AddLiquidity pool={s} chainId={chainId} />
+            <AddLiquidity pool={s} chainId={evmChainId} />
           ) : (
             <Notice>
-              MORROW currently supports adding liquidity to Uniswap v3 pools. This pool uses a different protocol
+              Morrow currently supports adding liquidity to Uniswap v3 pools. This pool uses a different protocol
               {p?.dex ? ` (${p.dex})` : ""} — manage it on that protocol&apos;s own interface.
             </Notice>
           )}

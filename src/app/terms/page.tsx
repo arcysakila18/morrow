@@ -8,7 +8,7 @@ export default function TermsPage() {
     <Prose title="Terms of use" lead="Template terms. The operator of this deployment must review and adapt them with qualified counsel before launch.">
       <section>
         <h2>The interface</h2>
-        <p>MORROW is a software interface that helps you build transactions for third-party smart contracts on Robinhood Chain. MORROW does not custody assets, execute trades on your behalf, or act as a broker, exchange, or adviser.</p>
+        <p>Morrow is a software interface that helps you build transactions for third-party smart contracts on Robinhood Chain. Morrow does not custody assets, execute trades on your behalf, or act as a broker, exchange, or adviser.</p>
         <p>{SITE.disclaimer}</p>
       </section>
       <section>

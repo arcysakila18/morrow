@@ -1,12 +1,12 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
-import { isAddress } from "viem";
-import { getOhlcv, getPool, networkFromRequest } from "@/lib/market/dexpaprika";
+import { getOhlcv, getPool, networkFromRequest, isTokenAddress } from "@/lib/market/dexpaprika";
 
 export async function GET(req: Request, ctx: { params: Promise<{ address: string }> }) {
   const { address } = await ctx.params;
-  if (!isAddress(address)) return NextResponse.json({ error: "Invalid address" }, { status: 400 });
   const network = networkFromRequest(req);
   if (!network) return NextResponse.json({ error: "Market data isn't available for this network" , chart: [] }, { status: 404 });
+  if (!isTokenAddress(network, address)) return NextResponse.json({ error: "Invalid address" }, { status: 400 });
   try {
     const [pool, chart] = await Promise.all([getPool(network, address), getOhlcv(network, address).catch(() => [])]);
     return NextResponse.json({ pool, chart });

@@ -19,7 +19,7 @@ export function AreaChart({ data, height = 220, positive = true }: { data: { t: 
   }, [data, H]);
 
   if (!path) return <div className="flex items-center justify-center text-sm text-faint" style={{ height }}>No chart data yet</div>;
-  const color = positive ? "#1d8a5a" : "#cf4636";
+  const color = positive ? "#40c98a" : "#ff6b5c";
   const h = hover != null ? data[hover] : null;
 
   return (
@@ -48,7 +48,7 @@ export function AreaChart({ data, height = 220, positive = true }: { data: { t: 
         <path d={path} fill="none" stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
         {hover != null && pts[hover] && (
           <>
-            <line x1={pts[hover].x} x2={pts[hover].x} y1={0} y2={H} stroke="#101114" strokeOpacity="0.15" vectorEffect="non-scaling-stroke" />
+            <line x1={pts[hover].x} x2={pts[hover].x} y1={0} y2={H} stroke="#f4f4ef" strokeOpacity="0.2" vectorEffect="non-scaling-stroke" />
             <circle cx={pts[hover].x} cy={pts[hover].y} r="4" fill={color} vectorEffect="non-scaling-stroke" />
           </>
         )}

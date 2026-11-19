@@ -6,7 +6,7 @@ type Variant = "primary" | "ink" | "soft" | "ghost" | "outline" | "danger";
 type Size = "sm" | "md" | "lg" | "xl";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-lime text-ink hover:bg-lime-deep disabled:bg-surface-2 disabled:text-faint",
+  primary: "bg-lime text-on-lime hover:bg-lime-deep disabled:bg-surface-2 disabled:text-faint",
   ink: "bg-ink text-paper hover:bg-ink-2 disabled:bg-surface-2 disabled:text-faint",
   soft: "bg-surface-2 text-ink hover:bg-surface-3 disabled:text-faint",
   ghost: "bg-transparent text-ink hover:bg-surface-2 disabled:text-faint",

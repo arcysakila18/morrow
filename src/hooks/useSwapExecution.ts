@@ -1,6 +1,7 @@
 "use client";
 import { useCallback, useState } from "react";
 import { useAccount, usePublicClient, useWalletClient } from "wagmi";
+import { chainName } from "@/config/chains";
 import { maxUint256, WaitForTransactionReceiptTimeoutError, type Hash } from "viem";
 import { erc20Abi } from "@/lib/abis";
 import { humanizeError } from "@/lib/errors";
@@ -34,7 +35,7 @@ export function useSwapExecution() {
   const execute = useCallback(
     async (quote: Quote, opts: { requote: () => Promise<Quote | null>; summary: string; infiniteApproval?: boolean }) => {
       if (!address || !wallet) return setStep({ kind: "error", message: "Connect a wallet first." });
-      if (walletChainId !== quote.chainId) return setStep({ kind: "error", message: "Your wallet is on a different network. Switch to Robinhood Chain to continue." });
+      if (walletChainId !== quote.chainId) return setStep({ kind: "error", message: `Your wallet is on a different network. Switch to ${chainName(quote.chainId)} to continue.` });
       const client = publicClient;
       if (!client || client.chain?.id !== quote.chainId) return setStep({ kind: "error", message: "Network client unavailable." });
 
