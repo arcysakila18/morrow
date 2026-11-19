@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { getPublicClient } from "@wagmi/core";
+import { getPublicClient } from "wagmi/actions";
 import { wagmiConfig } from "@/lib/wagmi";
 import { cn } from "@/lib/cn";
 import { explorerUrl } from "@/config/chains";

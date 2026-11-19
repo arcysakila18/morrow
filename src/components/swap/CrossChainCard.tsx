@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAccount } from "wagmi";
-import { getPublicClient, getWalletClient, switchChain } from "@wagmi/core";
+import { getPublicClient, getWalletClient, switchChain } from "wagmi/actions";
 import { erc20Abi, formatUnits, isAddress, type Address, type Hex } from "viem";
 import { Connection, VersionedTransaction } from "@solana/web3.js";
 import { Button } from "@/components/ui/Button";
