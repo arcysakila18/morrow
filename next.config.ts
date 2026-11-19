@@ -15,7 +15,9 @@ const config: NextConfig = {
   // Type checking runs separately via `npm run typecheck`; don't block deploys on it.
   typescript: { ignoreBuildErrors: true },
   eslint: { ignoreDuringBuilds: true },
-  webpack: (cfg) => {
+  webpack: (cfg, { dev, isServer }) => {
+    // TEMPORARY (debugging the wallet modal crash): readable client code so errors name the real function.
+    if (!dev && !isServer) cfg.optimization.minimize = false;
     cfg.resolve.alias = {
       ...(cfg.resolve.alias ?? {}),
       // Unused wallet SDK bundled by @wagmi/connectors (see stub for details).

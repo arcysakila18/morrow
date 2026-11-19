@@ -6,6 +6,7 @@ import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { Backdrop } from "@/components/layout/Backdrop";
 import { SITE } from "@/config/site";
+import { DebugBoundary } from "@/components/DebugBoundary";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap" });
 
@@ -25,11 +26,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={inter.variable}>
       <body>
         <Backdrop />
-        <Providers>
-          <Nav />
-          <main className="min-h-[calc(100dvh-4rem)]">{children}</main>
-          <Footer />
-        </Providers>
+        <DebugBoundary>
+          <Providers>
+            <Nav />
+            <main className="min-h-[calc(100dvh-4rem)]">{children}</main>
+            <Footer />
+          </Providers>
+        </DebugBoundary>
       </body>
     </html>
   );
