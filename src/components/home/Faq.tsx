@@ -7,8 +7,8 @@ const QA = [
   { q: "Is Morrow custodial?", a: "No. Morrow builds transactions; your wallet signs them. Morrow never asks for, receives or stores seed phrases or private keys, and never holds your funds." },
   { q: "What does it cost?", a: "Morrow adds no fee. You pay network gas plus the fees of the pool, aggregator or bridge that fills your trade. Every fee is shown before you sign." },
   { q: "How do cross-network swaps work?", a: "Pick a pay token on one network and a receive token on another. LI.FI finds a route through bridges and DEXs, you sign once on the source network, and Morrow tracks the transfer until it lands." },
-  { q: "Which networks are supported?", a: "Robinhood Chain, Ethereum, Base, Arbitrum, BNB Chain and Solana. Stock tokens live on Robinhood Chain." },
-  { q: "Has Morrow been audited?", a: "No. Morrow uses third-party smart contracts (Uniswap, 0x, 1inch, Jupiter, LI.FI) that it does not control. Only trade what you can afford to lose." },
+  { q: "Which networks are supported?", a: "Robinhood Chain, Ethereum, Base, Arbitrum and BNB Chain. Stock tokens live on Robinhood Chain." },
+  { q: "Has Morrow been audited?", a: "No. Morrow uses third-party smart contracts (Uniswap, 0x, 1inch, LI.FI) that it does not control. Only trade what you can afford to lose." },
   { q: "Is Morrow affiliated with Robinhood?", a: "No. Morrow is an independent interface and is not affiliated with, sponsored by, or endorsed by Robinhood Markets, Inc. or its affiliates." },
 ];
 

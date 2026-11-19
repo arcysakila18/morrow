@@ -8,7 +8,7 @@ import { useSolanaTokens } from "./useSolana";
 export function useVerifiedSet() {
   const { chainId, isSolana } = useAppChain();
   const { tokens, isLoading } = useTokenList(chainId);
-  const sol = useSolanaTokens();
+  const sol = useSolanaTokens("", isSolana);
   const set = useMemo(() => new Set(tokens.filter((t) => t.source !== "custom").map((t) => t.address.toLowerCase())), [tokens]);
   // Solana: Jupiter's verified list (mints are case-sensitive).
   const solSet = useMemo(() => new Set((sol.data ?? []).filter((t) => t.verified).map((t) => t.mint)), [sol.data]);

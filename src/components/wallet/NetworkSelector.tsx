@@ -88,14 +88,6 @@ export function NetworkSelector() {
         <div className="fixed inset-x-3 top-[4.25rem] z-40 max-h-[70dvh] animate-rise overflow-y-auto rounded-[20px] border border-line bg-surface p-2 sm:absolute sm:inset-x-auto sm:right-0 sm:top-12 sm:w-72" style={{ boxShadow: "var(--shadow-pop)" }}>
           {showWrong && <p className="px-3 pb-2 pt-2 text-xs leading-relaxed text-muted">Your wallet is on an unsupported network. Choose one to switch to.</p>}
           {mainnets.map(row)}
-          <button onClick={selectSolana} className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left text-sm hover:bg-surface-2">
-            <ChainLogo chainId={SOLANA_ID} size={26} />
-            <span className="flex-1">
-              <span className="block font-medium">Solana</span>
-              <span className="block text-xs text-faint">Mainnet · swaps via Jupiter</span>
-            </span>
-            {isSolana && <IconCheck width={16} height={16} />}
-          </button>
           <div className="mx-3 my-1.5 h-px bg-line" />
           {testnets.map(row)}
           {isConnected && <p className="px-3 pb-1 pt-2 text-[11px] leading-relaxed text-faint">Your wallet will ask you to approve the switch.</p>}

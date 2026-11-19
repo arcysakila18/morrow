@@ -8,7 +8,7 @@ import { useCountUp, useInView } from "@/components/home/Reveal";
 import { cn } from "@/lib/cn";
 import type { MarketPool } from "@/lib/market/dexpaprika";
 
-const NETWORK_COUNT = 6; // Robinhood Chain, Ethereum, Base, Arbitrum, BNB Chain, Solana
+const NETWORK_COUNT = 5; // Robinhood Chain, Ethereum, Base, Arbitrum, BNB Chain
 const compact = (n: number) => new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 }).format(n);
 
 function Stat({ label, target, fmt, run, failed, delay, accent }: { label: string; target: number | null; fmt: (n: number) => string; run: boolean; failed: boolean; delay: number; accent?: boolean }) {

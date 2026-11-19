@@ -6,14 +6,11 @@ import { WagmiProvider } from "@privy-io/wagmi";
 import { PRIVY_APP_ID, wagmiConfig } from "@/lib/wagmi";
 import { SUPPORTED_CHAINS, robinhoodChain } from "@/config/chains";
 import { WalletModal } from "@/components/wallet/WalletModal";
-import { SolanaConnectModal } from "@/components/wallet/SolanaConnectModal";
-import { useSolanaAutoConnect } from "@/hooks/useSolanaWallet";
 import { Toaster } from "@/components/layout/Toaster";
 import { useLiveSync } from "@/hooks/useLive";
 
 function LiveSync() {
   useLiveSync();
-  useSolanaAutoConnect();
   return null;
 }
 
@@ -35,7 +32,6 @@ export function Providers({ children }: { children: ReactNode }) {
           loginMessage: "Trade at your own pace.",
           showWalletLoginFirst: true,
         },
-        // EVM only. Solana wallets connect directly (see SolanaConnectModal).
         // Email users get a self-custodial Privy EVM wallet; users with their own wallet keep using it.
         embeddedWallets: { ethereum: { createOnLogin: "users-without-wallets" } },
       }}
@@ -44,7 +40,6 @@ export function Providers({ children }: { children: ReactNode }) {
         <WagmiProvider config={wagmiConfig}>
           {children}
           <WalletModal />
-          <SolanaConnectModal />
           <Toaster />
           <LiveSync />
         </WagmiProvider>

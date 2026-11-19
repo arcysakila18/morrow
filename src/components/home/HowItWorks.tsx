@@ -2,7 +2,7 @@ import { IconCheck, IconShuffle, IconWallet } from "@/components/ui/Icons";
 import { Reveal } from "./Reveal";
 
 const STEPS = [
-  { Icon: IconWallet, title: "Connect a wallet", body: "Use your EVM or Solana wallet, or sign in with email. Your keys never leave your wallet." },
+  { Icon: IconWallet, title: "Connect a wallet", body: "Use MetaMask, Rabby, any WalletConnect wallet, or sign in with email. Your keys never leave your wallet." },
   { Icon: IconShuffle, title: "Pick any token, on any network", body: "Same network or across networks, it is one swap. Morrow compares routes and shows what you will receive." },
   { Icon: IconCheck, title: "Review and sign once", body: "Every trade is simulated first. You approve only the exact amount, then sign in your own wallet." },
 ];

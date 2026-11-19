@@ -77,8 +77,8 @@ function Picker({ onClose, onSelect, selected }: { onClose: () => void; onSelect
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [registries.map((r) => r.dataUpdatedAt).join(","), evmChains.join(","), custom]);
 
-  const solList = useSolanaTokens(includesSol && searching ? dq : "");
-  const solVerified = useSolanaTokens("");
+  const solList = useSolanaTokens(includesSol && searching ? dq : "", includesSol);
+  const solVerified = useSolanaTokens("", includesSol);
   const verifiedKeys = useMemo(() => {
     const s = new Set<string>();
     registry.forEach((list) => list.forEach((t) => t.source !== "custom" && s.add(tokenKey(t))));

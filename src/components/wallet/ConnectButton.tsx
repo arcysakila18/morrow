@@ -74,11 +74,6 @@ export function ConnectButton() {
             </div>
           </div>
           <div className="my-1 h-px bg-line" />
-          {!isSolana && !sol.address && (
-            <button onClick={() => { setOpen(false); openWalletModal("solana"); }} className="block w-full rounded-xl px-3 py-2.5 text-left text-sm hover:bg-surface-2">
-              Connect a Solana wallet
-            </button>
-          )}
           <Link href="/portfolio" onClick={() => setOpen(false)} className="block rounded-xl px-3 py-2.5 text-sm hover:bg-surface-2">
             Portfolio
           </Link>

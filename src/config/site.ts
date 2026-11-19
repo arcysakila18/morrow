@@ -2,7 +2,7 @@ export const SITE = {
   name: "Morrow",
   tagline: "Trade at your own pace.",
   url: "https://morrowswap.trade",
-  description: "Swap stock tokens and crypto across Robinhood Chain, Ethereum, Base, Arbitrum, BNB Chain and Solana. Non-custodial, no added fee.",
+  description: "Swap stock tokens and crypto across Robinhood Chain, Ethereum, Base, Arbitrum and BNB Chain. Non-custodial, no added fee.",
   links: {
     x: "https://x.com/morrowswap",
     /** Empty until a server exists; empty links are hidden. */

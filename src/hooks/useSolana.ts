@@ -3,9 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { SOL_DEFAULTS, type SolToken } from "@/lib/solana/constants";
 
 /** Jupiter-verified Solana tokens (with official icons), plus search results when `q` is set. */
-export function useSolanaTokens(q = "") {
+export function useSolanaTokens(q = "", enabled = true) {
   const query = q.trim();
   return useQuery({
+    enabled,
     queryKey: ["sol-tokens", query],
     staleTime: query ? 60_000 : 10 * 60_000,
     queryFn: async () => {

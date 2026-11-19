@@ -10,7 +10,7 @@ export default function BridgePage() {
       <div className="mb-8 text-center">
         <h1 className="text-[34px] font-semibold leading-[1.05] tracking-[-0.03em] sm:text-[44px]">Swap across networks</h1>
         <p className="mx-auto mt-3 max-w-md text-[15px] leading-relaxed text-muted">
-          Pick any token on Robinhood Chain, Ethereum, Base, Arbitrum, BNB Chain or Solana and receive any token on another. One signature in your own wallet.
+          Pick any token on Robinhood Chain, Ethereum, Base, Arbitrum or BNB Chain and receive any token on another. One signature in your own wallet.
         </p>
       </div>
       <Suspense>

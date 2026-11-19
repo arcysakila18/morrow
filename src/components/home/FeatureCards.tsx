@@ -13,7 +13,6 @@ import { IconBridge, IconCompass, IconDrop, IconPie, IconSwapNav } from "@/compo
 import { useInView } from "@/components/home/Reveal";
 import { formatUsd } from "@/lib/format";
 import { cn } from "@/lib/cn";
-import { SOLANA_ID } from "@/config/chains";
 import type { MarketToken } from "@/lib/market/dexpaprika";
 
 type Tone = "lime" | "sky" | "violet" | "mint" | "peach";
@@ -75,10 +74,9 @@ function Feature({
 /* ---------- Visuals ---------- */
 
 const ROUTES = [
-  { name: "Uniswap v3", d: "M40 120 C 140 120, 150 34, 240 34 S 340 120, 440 120", y: 34 },
-  { name: "0x", d: "M40 120 C 140 120, 150 92, 240 92 S 340 120, 440 120", y: 92 },
-  { name: "1inch", d: "M40 120 C 140 120, 150 148, 240 148 S 340 120, 440 120", y: 148 },
-  { name: "Jupiter", d: "M40 120 C 140 120, 150 206, 240 206 S 340 120, 440 120", y: 206 },
+  { name: "Uniswap v3", d: "M40 120 C 140 120, 150 44, 240 44 S 340 120, 440 120", y: 44 },
+  { name: "0x", d: "M40 120 C 140 120, 150 120, 240 120 S 340 120, 440 120", y: 120 },
+  { name: "1inch", d: "M40 120 C 140 120, 150 196, 240 196 S 340 120, 440 120", y: 196 },
 ];
 
 /** Diagram of how a quote is found: every source is checked and the best route wins. Illustrative, no prices. */
@@ -155,9 +153,9 @@ function LiveTokens() {
   );
 }
 
-const BRIDGE_CHAINS = [4663, 1, 8453, 42161, 56, SOLANA_ID];
+const BRIDGE_CHAINS = [4663, 1, 8453, 42161, 56];
 
-/** The six networks orbiting Morrow. */
+/** The networks orbiting Morrow. */
 function ChainOrbit() {
   const R = 104;
   return (
@@ -265,7 +263,7 @@ export function FeatureCards() {
         Icon={IconSwapNav}
         label="Swap"
         title={<>Best price.<br />Every swap.</>}
-        body="Morrow checks Uniswap v3, 0x, 1inch and Jupiter, then simulates the trade before you sign."
+        body="Morrow checks Uniswap v3, 0x and 1inch, then simulates the trade before you sign."
         cta="Start swapping"
         href="/#swap"
         side
@@ -273,7 +271,7 @@ export function FeatureCards() {
         className="md:col-span-2"
       />
       <Feature tone="sky" Icon={IconCompass} label="Explore" title={<>Explore.<br />Swap. Repeat.</>} body="Live prices, volume and pools for every network, read from on-chain data." cta="Explore tokens" href="/explore" visual={<LiveTokens />} />
-      <Feature tone="violet" Icon={IconBridge} label="Cross-network" title={<>Swap across<br />networks.</>} body="Pay on one network, receive on another, in one swap. Robinhood Chain, Ethereum, Base, Arbitrum, BNB Chain and Solana." cta="Try it" href="/bridge" visual={<ChainOrbit />} delay={120} />
+      <Feature tone="violet" Icon={IconBridge} label="Cross-network" title={<>Swap across<br />networks.</>} body="Pay on one network, receive on another, in one swap. Robinhood Chain, Ethereum, Base, Arbitrum and BNB Chain." cta="Try it" href="/bridge" visual={<ChainOrbit />} delay={120} />
       <Feature tone="mint" Icon={IconDrop} label="Liquidity" title={<>Provide liquidity,<br />earn fees.</>} body="Add liquidity to Uniswap v3 pools and track every position in one place." cta="View pools" href="/pools" visual={<LiquidityViz />} />
       <Feature tone="peach" Icon={IconPie} label="Portfolio" title={<>Everything you<br />hold. One view.</>} body="Balances read straight from the chain and valued at live market prices." cta="Open portfolio" href="/portfolio" visual={<PortfolioViz />} delay={120} />
     </div>

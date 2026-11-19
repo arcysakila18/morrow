@@ -11,7 +11,8 @@ import type { MarketToken } from "@/lib/market/dexpaprika";
  * One token shape for every network. EVM tokens use their chain id; Solana tokens use
  * chainId 101 with the mint in `address` (wrapped-SOL mint = native SOL, as Jupiter treats it).
  */
-export const MAINNETS: AppChainId[] = [4663, 1, 8453, 42161, 56, SOLANA_ID];
+/** Networks offered in the app (EVM only for now; Solana code paths stay dormant). */
+export const MAINNETS: AppChainId[] = [4663, 1, 8453, 42161, 56];
 export const USDT_MINT = "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB";
 
 export const isSol = (t?: { chainId: number } | null) => t?.chainId === SOLANA_ID;

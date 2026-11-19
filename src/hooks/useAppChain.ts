@@ -18,7 +18,9 @@ export const solanaModeStore = create<boolean>(false);
 export function useAppChain() {
   const { chainId: walletChainId, isConnected } = useAccount();
   const viewChain = viewChainStore.use();
-  const solana = solanaModeStore.use();
+  // EVM only for now: Solana mode is switched off everywhere.
+  solanaModeStore.use();
+  const solana = false;
   const wrongNetwork = !solana && isConnected && !isSupportedChain(walletChainId);
   const chainId: SupportedChainId = isConnected && isSupportedChain(walletChainId) ? walletChainId : viewChain;
   /** Chain key for market data, logos and explorer links (Solana-aware). */

@@ -11,7 +11,7 @@ import { Faq } from "@/components/home/Faq";
 import { SectionHeader } from "@/components/home/Section";
 import { SITE } from "@/config/site";
 
-const SOURCES = ["Uniswap v3", "0x", "1inch", "Jupiter", "LI.FI"];
+const SOURCES = ["Uniswap v3", "0x", "1inch", "LI.FI"];
 
 export default function HomePage() {
   const words = SITE.tagline.split(" ");
@@ -35,7 +35,7 @@ export default function HomePage() {
             ))}
           </h1>
           <p className="fade-up relative mt-5 max-w-[28rem] text-center text-[17px] leading-relaxed text-muted sm:text-[19px]" style={{ animationDelay: "380ms" }}>
-            Stock tokens and crypto on six networks. Best route, one signature, <span className="text-ink">no added fee</span>.
+            Stock tokens and crypto on five networks. Best route, one signature, <span className="text-ink">no added fee</span>.
           </p>
           <div className="fade-up relative mt-9 flex w-full justify-center" style={{ animationDelay: "520ms" }}>
             <div className="relative w-full max-w-[468px]">
@@ -62,7 +62,7 @@ export default function HomePage() {
       <div className="mx-auto w-full max-w-[1200px] px-4 sm:px-6">
         {/* Networks */}
         <section className="mt-28 sm:mt-36">
-          <SectionHeader eyebrow="Networks" title={<>Six networks.<br /><span className="text-muted">One swap.</span></>} lead="Trade where your assets already are, or move them in the same step. Morrow never switches your wallet without asking." />
+          <SectionHeader eyebrow="Networks" title={<>Five networks.<br /><span className="text-muted">One swap.</span></>} lead="Trade where your assets already are, or move them in the same step. Morrow never switches your wallet without asking." />
           <div className="mt-10">
             <Networks />
           </div>

@@ -7,7 +7,7 @@ export const metadata = { title: "Docs" };
 export default function DocsPage() {
   const chains = SUPPORTED_CHAINS.filter((c) => CONTRACTS[c.id].uniswapV3);
   return (
-    <Prose title="How Morrow works" lead="A non-custodial interface for trading on Robinhood Chain, Ethereum, Base, Arbitrum, BNB Chain and Solana, including swaps across networks. Your wallet signs every transaction; Morrow never holds funds or keys.">
+    <Prose title="How Morrow works" lead="A non-custodial interface for trading on Robinhood Chain, Ethereum, Base, Arbitrum and BNB Chain, including swaps across networks. Your wallet signs every transaction; Morrow never holds funds or keys.">
       <section>
         <h2>Networks</h2>
         <ul>
@@ -17,7 +17,6 @@ export default function DocsPage() {
               {CHAIN_META[c.id].testnet ? ". No swap contracts are published for this network." : ""}
             </li>
           ))}
-          <li>Solana: swaps through Jupiter Ultra</li>
         </ul>
         <p>Robinhood Chain is the default network and the only one with Stock Tokens. Morrow never switches your wallet&apos;s network without your click.</p>
       </section>
@@ -29,7 +28,6 @@ export default function DocsPage() {
           <li><strong>0x Swap API</strong>: available on all five mainnets when the operator configures an API key. Includes RFQ liquidity for Stock Tokens on Robinhood Chain.</li>
           <li><strong>1inch Swap API</strong>: available on all five mainnets when the operator configures an API key.</li>
           <li><strong>Rialto</strong> (Robinhood Chain): a direct integration needs partner API access. Until then its liquidity is reachable through 1inch.</li>
-          <li><strong>Jupiter Ultra</strong> (Solana): Jupiter quotes and builds the transaction, your wallet signs it, Jupiter lands it.</li>
           <li><strong>Cross-network</strong>: when the pay and receive tokens are on different networks, the swap is routed by LI.FI (bridges such as Relay, Across, Stargate and the canonical Arbitrum bridge, plus DEXs). You approve the exact amount, sign once on the source network, and Morrow tracks it until it lands.</li>
           <li><strong>Native ⇄ wrapped</strong>: ETH/WETH and BNB/WBNB are converted 1:1 through the canonical wrapper contracts.</li>
         </ul>
