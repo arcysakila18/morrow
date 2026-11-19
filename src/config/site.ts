@@ -15,6 +15,9 @@ export const SITE = {
     symbol: "MORROW",
     name: "Morrow",
     decimals: 18,
+    /** Where to buy while the token is still on the launchpad curve (e.g. its Pons page). Empty = hidden. */
+    buyUrl: "" as string,
+    buyLabel: "Buy on Pons",
   },
   links: {
     x: "https://x.com/morrowswap",
