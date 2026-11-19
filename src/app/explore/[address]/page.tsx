@@ -16,7 +16,7 @@ import { useLivePrice } from "@/hooks/useLivePrice";
 import { Flash, LiveBadge } from "@/components/ui/Live";
 import { useAppChain } from "@/hooks/useAppChain";
 
-type Data = { token: MarketToken; pools: MarketPool[]; chart: { t: number; c: number }[]; chartPool: MarketPool | null };
+type Data = { token: MarketToken; pools: MarketPool[]; chart: { t: number; c: number }[]; chartHours?: number; chartPool: MarketPool | null; chartPair?: { symbol: string }[] };
 
 export default function TokenPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = use(params);
@@ -28,8 +28,10 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
 
   if (q.isError) return <div className="mx-auto max-w-[1200px] px-4 pt-14 sm:px-6"><EmptyState title="Token data unavailable" body={(q.error as Error).message} /></div>;
   const t = q.data?.token;
-  // Chart is the top pool's price for its base token; only label as this token if it is the base.
-  const chartIsToken = !!q.data?.chartPool && q.data.chartPool.tokens[0]?.address.toLowerCase() === address.toLowerCase();
+  // Chart: this token's price in the deepest pool (the server orients the pair).
+  const chartIsToken = (q.data?.chart?.length ?? 0) > 1;
+  const pair = (q.data?.chartPair ?? []).map((x) => x.symbol).filter((s) => s && s !== "?");
+  const range = (q.data?.chartHours ?? 24) > 24 ? "7-day" : "24-hour";
 
   return (
     <div className="mx-auto max-w-[1200px] px-4 pt-8 sm:px-6 sm:pt-12">
@@ -55,7 +57,7 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
             ) : (
               <div className="flex h-[220px] items-center justify-center text-sm text-faint">Price history isn&apos;t available for this token yet.</div>
             )}
-            {chartIsToken && <p className="mt-2 text-[11px] text-faint">7-day price from the deepest pool ({q.data!.chartPool!.tokens.map((x) => x.symbol).join(" / ")}).</p>}
+            {chartIsToken && <p className="mt-2 text-[11px] text-faint">{range} price from the deepest pool{pair.length === 2 ? ` (${pair.join(" / ")})` : ""}, via DexPaprika.</p>}
           </div>
           <h2 className="mt-10 text-[17px] font-semibold">Pools</h2>
           <div className="mt-3">

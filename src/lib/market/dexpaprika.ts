@@ -143,16 +143,33 @@ export async function getPrices(NETWORK: string, addresses: string[]) {
       if (id && p != null) out[normAddr(NETWORK, String(id))] = p;
     }
   }
+  const missing = addresses.filter((a) => out[normAddr(NETWORK, a)] == null).slice(0, 10);
+  await Promise.all(
+    missing.map((a) =>
+      getToken(NETWORK, a)
+        .then((t) => {
+          if (t.priceUsd != null) out[normAddr(NETWORK, a)] = t.priceUsd;
+        })
+        .catch(() => {}),
+    ),
+  );
   return out;
 }
 
-export async function getOhlcv(NETWORK: string, pool: string, days = 7) {
-  const start = new Date(Date.now() - days * 86400_000).toISOString().slice(0, 10);
-  const j = await get<unknown>(`/networks/${NETWORK}/pools/${pool}/ohlcv?start=${start}&interval=${days > 2 ? "4h" : "1h"}&limit=200`, 300);
+/**
+ * Pool price history. Without an API key DexPaprika serves 1h+ candles for the last 24 hours;
+ * with a (free) key, 7 days. Valid intervals: 1m 5m 10m 15m 30m 1h 6h 12h 24h.
+ */
+export async function getOhlcv(NETWORK: string, pool: string, inversed = false) {
+  const keyed = !!serverEnv.dexPaprikaApiKey;
+  const hours = keyed ? 168 : 24;
+  const start = Math.floor((Date.now() - hours * 3600_000) / 1000);
+  const j = await get<unknown>(`/networks/${NETWORK}/pools/${pool}/ohlcv?start=${start}&interval=1h&limit=${hours}${inversed ? "&inversed=true" : ""}`, 300);
   const rows = Array.isArray(j) ? j : [];
-  return rows
+  const points = rows
     .map((r: Record<string, any>) => ({ t: Date.parse(r.time_open ?? r.time_close), c: num(r.close) }))
-    .filter((r): r is { t: number; c: number } => Number.isFinite(r.t) && r.c != null);
+    .filter((r): r is { t: number; c: number } => Number.isFinite(r.t) && r.c != null && r.c > 0);
+  return { points, hours };
 }
 
 /** Tokens ranked by 24h pool volume, with per-token market details. */

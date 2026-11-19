@@ -15,11 +15,16 @@ const RPC = {
   56: { http: process.env.NEXT_PUBLIC_RPC_URL_56, ws: process.env.NEXT_PUBLIC_WS_URL_56, public: "https://bsc-dataseed.bnbchain.org" },
 } as const;
 
-/** WebSocket (push) first when configured, then a private HTTP RPC, then the public RPC. */
-function transport(c: { http?: string; ws?: string; public: string }): Transport {
+/**
+ * WebSocket (push) first when configured, then a private HTTP RPC, then Morrow's same-origin RPC
+ * proxy (browsers only: some public RPCs block cross-site requests), then the public RPC directly.
+ */
+function transport(chainId: number, c: { http?: string; ws?: string; public: string }): Transport {
+  const proxy = typeof window !== "undefined" ? `${window.location.origin}/api/rpc/${chainId}` : undefined;
   return fallback([
     ...(c.ws ? [webSocket(c.ws, { keepAlive: true, reconnect: true })] : []),
     ...(c.http ? [http(c.http, { batch: true })] : []),
+    ...(proxy ? [http(proxy, { batch: { batchSize: 40 } })] : []),
     http(c.public, { batch: true }),
   ]);
 }
@@ -32,11 +37,11 @@ export const wagmiConfig = createConfig({
   chains: [robinhoodChain, mainnet, base, arbitrum, bsc, robinhoodTestnet],
   ssr: true,
   transports: {
-    [robinhoodChain.id]: transport(RPC[4663]),
-    [mainnet.id]: transport(RPC[1]),
-    [base.id]: transport(RPC[8453]),
-    [arbitrum.id]: transport(RPC[42161]),
-    [bsc.id]: transport(RPC[56]),
+    [robinhoodChain.id]: transport(4663, RPC[4663]),
+    [mainnet.id]: transport(1, RPC[1]),
+    [base.id]: transport(8453, RPC[8453]),
+    [arbitrum.id]: transport(42161, RPC[42161]),
+    [bsc.id]: transport(56, RPC[56]),
     [robinhoodTestnet.id]: http("https://rpc.testnet.chain.robinhood.com", { batch: true }),
   },
 });

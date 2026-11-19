@@ -110,8 +110,8 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
   const unpriced = rows.length - priced.length;
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 pt-10 sm:px-6 sm:pt-14">
-      <div className="flex items-center gap-4">
+    <div className="mx-auto max-w-[1200px] overflow-x-clip px-4 pt-10 sm:px-6 sm:pt-14">
+      <div className="flex min-w-0 items-center gap-4">
         <Avatar address={address} size={52} />
         <div>
           <div className="flex items-center gap-1 font-mono text-[15px]">{shortAddress(address, 6)} <CopyButton value={address} /></div>
@@ -123,8 +123,8 @@ function PortfolioView({ address, chainId }: { address: `0x${string}`; chainId: 
 
       {!indexed && <Notice className="mt-6">Explorer history isn&apos;t available for {getChain(chainId).name}. Balances of listed tokens are read from the chain.</Notice>}
 
-      <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
-        <div className="card p-6">
+      <div className="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="card min-w-0 p-6">
           <div className="text-[13px] text-muted">Total value</div>
           <div className="tabular mt-1 text-[44px] font-semibold leading-none tracking-[-0.03em]">
             {loadingBalances ? <Skeleton className="h-11 w-48" /> : priced.length ? formatUsd(total) : holdings.length ? "—" : formatUsd(0)}
@@ -228,9 +228,9 @@ function Activity({ txs, loading, error, address, chainId }: { txs?: BsTx[]; loa
     .slice(0, 10);
 
   return (
-    <div className="card p-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-[15px] font-semibold">Recent activity</h2>
+    <div className="card min-w-0 p-5">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="shrink-0 text-[15px] font-semibold">Recent activity</h2>
         <AddressLink address={address} chainId={chainId} />
       </div>
       <div className="mt-3">
@@ -271,8 +271,8 @@ function SolanaPortfolio({ owner }: { owner: string }) {
   const total = priced.reduce((s, r) => s + (r.usd ?? 0), 0);
 
   return (
-    <div className="mx-auto max-w-[1200px] px-4 pt-10 sm:px-6 sm:pt-14">
-      <div className="flex items-center gap-4">
+    <div className="mx-auto max-w-[1200px] overflow-x-clip px-4 pt-10 sm:px-6 sm:pt-14">
+      <div className="flex min-w-0 items-center gap-4">
         <Avatar address={owner} size={52} />
         <div>
           <div className="flex items-center gap-1 font-mono text-[15px]">{shortAddress(owner, 6)} <CopyButton value={owner} /></div>
