@@ -35,7 +35,7 @@ export function ChainLogo({ chainId, size = 20, className }: { chainId: number; 
           height={size}
           loading="lazy"
           referrerPolicy="no-referrer"
-          className="h-full w-full object-cover"
+          className="block h-full w-full object-cover"
           onError={() => setAttempt((n) => n + 1)}
         />
       ) : (

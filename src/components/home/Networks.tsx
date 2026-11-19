@@ -21,8 +21,8 @@ export function Networks() {
             href="/bridge"
             className="group flex h-full flex-col items-start gap-4 rounded-[22px] border border-line bg-surface/70 p-4 backdrop-blur transition hover:-translate-y-0.5 hover:border-line-strong sm:p-5"
           >
-            <span className="rounded-[14px] bg-paper/70 p-1.5 ring-1 ring-line transition group-hover:ring-lime/40">
-              <ChainLogo chainId={n.id} size={32} />
+            <span className="flex h-12 w-12 items-center justify-center rounded-full bg-paper/70 ring-1 ring-line transition group-hover:ring-lime/40">
+              <ChainLogo chainId={n.id} size={34} />
             </span>
             <span>
               <span className="block text-[15px] font-semibold leading-tight">{n.name}</span>

@@ -16,12 +16,12 @@ import { useLivePrice } from "@/hooks/useLivePrice";
 import { Flash, LiveBadge } from "@/components/ui/Live";
 import { useAppChain } from "@/hooks/useAppChain";
 
-type Data = { token: MarketToken; pools: MarketPool[]; chart: { t: number; c: number }[]; chartHours?: number; chartPool: MarketPool | null; chartPair?: { symbol: string }[] };
+type Data = { token: MarketToken; pools: MarketPool[]; chart: { t: number; c: number }[]; chartHours?: number; chartSource?: string; chartPool: MarketPool | null };
 
 export default function TokenPage({ params }: { params: Promise<{ address: string }> }) {
   const { address } = use(params);
   const { marketChainId: chainId } = useAppChain();
-  const q = useApi<Data>(`/api/market/token/${address}?chainId=${chainId}`, { refetchInterval: 20_000 });
+  const q = useApi<Data>(`/api/market/token/${address}?chainId=${chainId}`, { refetchInterval: 30_000 });
   const live = useLivePrice(address, chainId);
   const { isVerified, isLoading: vLoading } = useVerifiedSet();
   const verified = isVerified(address);
@@ -30,7 +30,6 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
   const t = q.data?.token;
   // Chart: this token's price in the deepest pool (the server orients the pair).
   const chartIsToken = (q.data?.chart?.length ?? 0) > 1;
-  const pair = (q.data?.chartPair ?? []).map((x) => x.symbol).filter((s) => s && s !== "?");
   const range = (q.data?.chartHours ?? 24) > 24 ? "7-day" : "24-hour";
 
   return (
@@ -57,7 +56,7 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
             ) : (
               <div className="flex h-[220px] items-center justify-center text-sm text-faint">Price history isn&apos;t available for this token yet.</div>
             )}
-            {chartIsToken && <p className="mt-2 text-[11px] text-faint">{range} price from the deepest pool{pair.length === 2 ? ` (${pair.join(" / ")})` : ""}, via DexPaprika.</p>}
+            {chartIsToken && <p className="mt-2 text-[11px] text-faint">{range} price from the most liquid pool, via {q.data?.chartSource ?? "GeckoTerminal"}. Refreshes every 30s.</p>}
           </div>
           <h2 className="mt-10 text-[17px] font-semibold">Pools</h2>
           <div className="mt-3">

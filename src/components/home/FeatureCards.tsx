@@ -174,7 +174,7 @@ function ChainOrbit() {
               className="absolute left-1/2 top-1/2"
               style={{ transform: `translate(-50%, -50%) translate(${Math.cos(a) * R}px, ${Math.sin(a) * R}px)` }}
             >
-              <div className="anim-spin-rev rounded-full bg-paper/90 p-1.5 ring-1 ring-violet/25">
+              <div className="anim-spin-rev flex h-12 w-12 items-center justify-center rounded-full bg-paper/90 ring-1 ring-violet/25">
                 <ChainLogo chainId={id} size={34} />
               </div>
             </div>

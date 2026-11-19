@@ -9,11 +9,16 @@
  */
 import { NATIVE_ADDRESS } from "./contracts";
 
+/** Some indexers list the native gas token under the zero address. */
+const ZERO = "0x0000000000000000000000000000000000000000";
+export const isNativeLike = (a?: string) => !!a && [ZERO, NATIVE_ADDRESS.toLowerCase(), "native"].includes(a.toLowerCase());
+
 const TW = "https://raw.githubusercontent.com/trustwallet/assets/master/blockchains";
 const ETH = `${TW}/ethereum/info/logo.png`;
 const BNB = `${TW}/smartchain/info/logo.png`;
 const tw = (address: string) => `${TW}/ethereum/assets/${address}/logo.png`;
-const WETH = tw("0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2");
+/** CoinGecko's official WETH artwork, large (250px) so it stays sharp. */
+const WETH = "https://assets.coingecko.com/coins/images/2518/large/weth.png";
 const USDC = tw("0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48");
 const USDT = tw("0xdAC17F958D2ee523a2206206994597C13D831ec7");
 const WBTC = tw("0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599");
@@ -53,7 +58,7 @@ export const LOGO_OVERRIDES: Record<string, string> = {};
 export function logoOverride(chainId: number, address?: string): string | undefined {
   if (!address) return undefined;
   const a = address.toLowerCase();
-  if (a === "native" || a === NATIVE_ADDRESS.toLowerCase()) return chainId === 56 ? BNB : chainId === 101 ? undefined : ETH;
+  if (a === "native" || a === NATIVE_ADDRESS.toLowerCase() || a === ZERO) return chainId === 56 ? BNB : chainId === 101 ? undefined : ETH;
   return CORE_LOGOS[chainId]?.[a] ?? LOGO_OVERRIDES[a];
 }
 
