@@ -10,13 +10,13 @@ export const SITE = {
    * chainId: 4663 Robinhood Chain · 1 Ethereum · 8453 Base · 42161 Arbitrum · 56 BNB Chain
    */
   token: {
-    address: "" as string,
+    address: "0xfc9b85de49285c3639322be03a690fadbbfd2ebf" as string,
     chainId: 4663 as number,
     symbol: "MORROW",
     name: "Morrow",
     decimals: 18,
     /** Where to buy while the token is still on the launchpad curve (e.g. its Pons page). Empty = hidden. */
-    buyUrl: "" as string,
+    buyUrl: "https://ponsfamily.com/launchpad/0xfc9b85de49285c3639322be03a690fadbbfd2ebf" as string,
     buyLabel: "Buy on Pons",
   },
   links: {
